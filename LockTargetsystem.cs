@@ -25,6 +25,20 @@ namespace EF.PoliceMod.Gameplay
         public bool HasTarget => _currentTarget != null && _currentTarget.Exists();
         public bool IsCurrentTargetArrested => _currentState == TargetState.Arrested;
 
+        public bool IsPlayerAimingCurrentTarget()
+        {
+            try
+            {
+                var player = Game.Player.Character;
+                if (player == null || !player.Exists()) return false;
+                if (_currentTarget == null || !_currentTarget.Exists()) return false;
+
+                var aimed = FindPedInFront(player, 10.0f);
+                return aimed != null && aimed.Exists() && aimed.Handle == _currentTarget.Handle;
+            }
+            catch { return false; }
+        }
+
         public LockTargetSystem(SuspectController suspectController)
         {
             _suspectController = suspectController
@@ -54,6 +68,42 @@ namespace EF.PoliceMod.Gameplay
                 }
                 catch { }
             }
+        }
+
+        private bool IsHandleInCurrentCase(int handle)
+        {
+            if (handle <= 0) return false;
+            try
+            {
+                var mgr = EFCore.Instance?.GetCaseManager();
+                if (mgr?.SuspectHandles != null)
+                {
+                    foreach (var h in mgr.SuspectHandles)
+                    {
+                        if (h == handle) return true;
+                    }
+                }
+            }
+            catch { }
+            return false;
+        }
+
+        private int GetCaseSlotIndex(int handle)
+        {
+            if (handle <= 0) return -1;
+            try
+            {
+                var mgr = EFCore.Instance?.GetCaseManager();
+                if (mgr?.SuspectHandles != null)
+                {
+                    for (int i = 0; i < mgr.SuspectHandles.Count; i++)
+                    {
+                        if (mgr.SuspectHandles[i] == handle) return i;
+                    }
+                }
+            }
+            catch { }
+            return -1;
         }
 
         /// <summary>
@@ -125,18 +175,13 @@ namespace EF.PoliceMod.Gameplay
             if (player == null || !player.Exists())
                 return;
 
-            // 再按一次 L：解除锁定（巡逻/任务都一致）
+            bool hadLockedTarget = false;
             try
             {
-                if (_currentTarget != null && _currentTarget.Exists()
-                    && (_currentState == TargetState.Locked || _currentState == TargetState.Arrested))
-                {
-                    ForceClear();
-                    Notification.Show("~y~已解除锁定");
-                    return;
-                }
+                hadLockedTarget = _currentTarget != null && _currentTarget.Exists()
+                    && (_currentState == TargetState.Locked || _currentState == TargetState.Arrested);
             }
-            catch { }
+            catch { hadLockedTarget = false; }
 
             // 非巡逻：只能锁定“本案嫌疑人”
             if (!_allowLockAnyPed)
@@ -155,11 +200,55 @@ namespace EF.PoliceMod.Gameplay
                 return;
             }
 
+            // 双嫌疑人链路：已锁定 A 时，瞄到 B 再按 L => 切换锁定而不是直接解锁。
+            if (hadLockedTarget)
+            {
+                try
+                {
+                    if (target.Handle == _currentTarget.Handle)
+                    {
+                        int sameSlot = GetCaseSlotIndex(target.Handle);
+                        if (sameSlot >= 0) Notification.Show($"~g~已锁定嫌疑人({sameSlot + 1})");
+                        else Notification.Show(_allowLockAnyPed ? "~g~已锁定目标" : "~g~已锁定嫌疑人");
+                        return;
+                    }
+
+                    bool canSwitch = _allowLockAnyPed || IsHandleInCurrentCase(target.Handle);
+                    if (canSwitch)
+                    {
+                        _currentTarget = target;
+                        _currentState = TargetState.Locked;
+                        _everLocked = true;
+                        _lockPressureTriggered = false;
+
+                        bool isCaseSuspect = false;
+                        try { isCaseSuspect = IsHandleInCurrentCase(target.Handle); } catch { isCaseSuspect = false; }
+                        if (isCaseSuspect)
+                        {
+                            try { _suspectController?.TakeControl(_currentTarget); } catch { }
+                        }
+
+                        int slotIndex = GetCaseSlotIndex(target.Handle);
+                        if (slotIndex >= 0) Notification.Show($"~g~已锁定嫌疑人({slotIndex + 1})");
+                        else Notification.Show(_allowLockAnyPed ? "~g~已锁定目标" : "~g~已锁定嫌疑人");
+
+                        ModLog.Info($"[LockTargetSystem] Switched lock target handle={_currentTarget.Handle} slot={slotIndex}");
+                        return;
+                    }
+
+                    int curSlot = GetCaseSlotIndex(_currentTarget != null && _currentTarget.Exists() ? _currentTarget.Handle : -1);
+                    if (curSlot >= 0) Notification.Show($"~y~只能在本案嫌疑人间切换（当前：嫌疑人({curSlot + 1})）");
+                    else Notification.Show("~y~当前目标不在本案，保持现有锁定");
+                    return;
+                }
+                catch { }
+            }
+
             if (!_allowLockAnyPed)
             {
-                if (target.Handle != _suspect.Handle)
+                if (!IsHandleInCurrentCase(target.Handle))
                 {
-                    Notification.Show("~y~只能锁定嫌疑人");
+                    Notification.Show("~y~只能锁定本案嫌疑人");
                     return;
                 }
             }
@@ -174,7 +263,7 @@ namespace EF.PoliceMod.Gameplay
 
                 // 仅“案件嫌疑人”才 TakeControl；巡逻锁定路人不接管，避免污染任务执法链路
                 bool isCaseSuspect = false;
-                try { isCaseSuspect = (_suspect != null && _suspect.Exists() && _currentTarget.Handle == _suspect.Handle); } catch { isCaseSuspect = false; }
+                try { isCaseSuspect = IsHandleInCurrentCase(_currentTarget.Handle); } catch { isCaseSuspect = false; }
                 if (isCaseSuspect)
                 {
                     try
@@ -187,8 +276,10 @@ namespace EF.PoliceMod.Gameplay
                     }
                 }
 
-                Notification.Show(_allowLockAnyPed ? "~g~已锁定目标" : "~g~已锁定嫌疑人");
-                ModLog.Info($"[LockTargetSystem] Locked target handle={_currentTarget.Handle} allowAny={_allowLockAnyPed}");
+                int slotIndex = GetCaseSlotIndex(_currentTarget.Handle);
+                if (!_allowLockAnyPed && slotIndex >= 0) Notification.Show($"~g~已锁定嫌疑人({slotIndex + 1})");
+                else Notification.Show(_allowLockAnyPed ? "~g~已锁定目标" : "~g~已锁定嫌疑人");
+                ModLog.Info($"[LockTargetSystem] Locked target handle={_currentTarget.Handle} allowAny={_allowLockAnyPed} slot={slotIndex}");
             }
             catch (Exception ex)
             {
@@ -257,8 +348,18 @@ namespace EF.PoliceMod.Gameplay
             // 允许：已锁定 或 已处于“自动拘捕/已控制”(Arrested) 状态下重新选择拘捕风格（例如驾车逃逸线默认跳过拘捕阶段）
             if (_currentState != TargetState.Locked && _currentState != TargetState.Arrested)
             {
-                Notification.Show("~y~未锁定嫌疑人");
-                return;
+                // 双嫌疑人链路兜底：若目标仍存在但状态意外丢失，自动恢复为 Locked，避免误报“未锁定嫌疑人”。
+                if (_currentTarget != null && _currentTarget.Exists())
+                {
+                    _currentState = TargetState.Locked;
+                    _everLocked = true;
+                    ModLog.Warn("[LockTargetSystem] Recovered lock state before arrest attempt");
+                }
+                else
+                {
+                    Notification.Show("~y~未锁定嫌疑人");
+                    return;
+                }
             }
 
             Ped player = Game.Player.Character;
@@ -476,6 +577,7 @@ namespace EF.PoliceMod.Gameplay
         private bool IsExcludedPed(Ped ped)
         {
             if (ped == null || !ped.Exists()) return true;
+            try { if (ped.IsDead) return true; } catch { }
 
             if (EF.PoliceMod.Systems.DutyQuery.IsOnDuty)
             {
