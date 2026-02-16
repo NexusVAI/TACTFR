@@ -982,8 +982,8 @@ namespace EF.PoliceMod.Executors
             }
             else
             {
-                // 允许玩家不在车内时也能“塞人上车”：选择最近车辆（保守距离）
-                try { vehicle = World.GetAllVehicles().OrderBy(v => v.Position.DistanceTo(player.Position)).FirstOrDefault(); } catch { vehicle = null; }
+                // 允许玩家不在车内时也能“塞人上车”：选择玩家附近车辆，避免误选远处车辆。
+                try { vehicle = World.GetNearbyVehicles(player, 10.0f).OrderBy(v => v.Position.DistanceTo(player.Position)).FirstOrDefault(v => v != null && v.Exists()); } catch { vehicle = null; }
             }
 
             if (vehicle == null || !vehicle.Exists()) return;
@@ -1004,8 +1004,11 @@ namespace EF.PoliceMod.Executors
             catch { }
 
             try { suspect.Task.ClearAll(); } catch { }
-            try { EnsureCuffedClipset(suspect); } catch { }
-            try { EnsureCuffedUpperBodyPose(suspect); } catch { }
+            if (ShouldAutoVehicleSync(GetStyle()))
+            {
+                try { EnsureCuffedClipset(suspect); } catch { }
+                try { EnsureCuffedUpperBodyPose(suspect); } catch { }
+            }
 
             try { suspect.Task.EnterVehicle(vehicle, seat); } catch { }
         }

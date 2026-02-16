@@ -1305,20 +1305,64 @@ namespace EF.PoliceMod
             // 以玩家当前位置为种子，避免“接案后嫌疑人刷在几公里外导致看不到模型/立即丢失”
             Vector3 spawnSeed = player.Position;
 
-            // 终端“偏远/郊区/市区”生成距离：把嫌疑人刷远一点，避免太近无聊
+            // 终端“偏远/郊区/市区”生成距离：使用距离带，避免“刷太近”或“开局即超远丢失”。
             float spawnRadius = 220f;
+            float minSpawnDist = 90f;
+            float maxSpawnDist = 360f;
             try
             {
                 int region = (_terminalOptionId >= 0 && _terminalOptionId <= 5) ? (_terminalOptionId % 3) : 0;
-                if (region == 0) spawnRadius = 120f;      // 市区：尽量就近，不要开局就丢失
-                else if (region == 1) spawnRadius = 220f; // 郊区
-                else spawnRadius = 320f;                  // 偏远
+                if (region == 0)
+                {
+                    spawnRadius = 120f;
+                    minSpawnDist = 70f;
+                    maxSpawnDist = 220f;
+                }
+                else if (region == 1)
+                {
+                    spawnRadius = 240f;
+                    minSpawnDist = 180f;
+                    maxSpawnDist = 420f;
+                }
+                else
+                {
+                    spawnRadius = 340f;
+                    minSpawnDist = 260f;
+                    maxSpawnDist = 520f;
+                }
             }
-            catch { spawnRadius = 220f; }
+            catch
+            {
+                spawnRadius = 220f;
+                minSpawnDist = 90f;
+                maxSpawnDist = 360f;
+            }
 
-            Vector3 spawnPos = World.GetNextPositionOnStreet(
-                spawnSeed.Around(spawnRadius)
-            );
+            Vector3 spawnPos = spawnSeed;
+            try
+            {
+                bool picked = false;
+                for (int i = 0; i < 10; i++)
+                {
+                    Vector3 cand = World.GetNextPositionOnStreet(spawnSeed.Around(spawnRadius));
+                    float d = spawnSeed.DistanceTo(cand);
+                    if (d >= minSpawnDist && d <= maxSpawnDist)
+                    {
+                        spawnPos = cand;
+                        picked = true;
+                        break;
+                    }
+                }
+
+                if (!picked)
+                {
+                    spawnPos = World.GetNextPositionOnStreet(spawnSeed.Around(spawnRadius));
+                }
+            }
+            catch
+            {
+                spawnPos = World.GetNextPositionOnStreet(spawnSeed.Around(spawnRadius));
+            }
 
             // 尝试使用玩家通过终端选中的 ped（如果有且有效），否则创建随机 Ped
             if (_forcedSuspectHandle > 0)
