@@ -151,17 +151,6 @@ namespace EF.PoliceMod.Systems
                     LastSeen = "系统",
                     Reason = "任务",
                 },
-                new TerminalOption
-                {
-                    OptionId = 911,
-                    Stars = 4,
-                    DisplayName = "双人案件",
-                    SuspectName = "2 名嫌疑人",
-                    Crime = "协同处置",
-                    Location = "全域",
-                    LastSeen = "系统",
-                    Reason = "任务",
-                },
             };
             _index = 0;
             _page = TerminalPage.CaseTeamSelect;
@@ -275,7 +264,7 @@ namespace EF.PoliceMod.Systems
             }
             else if (_page == TerminalPage.CaseList)
             {
-                hint = $"[Num8]上  [Num2]下  [Num5]确认  [Num9]刷新{(_teamMode == CaseTeamMode.Dual ? "双人" : "单人")}列表  [Num0]返回";
+                hint = "[Num8]上  [Num2]下  [Num5]确认  [Num9]刷新列表  [Num0]返回";
             }
 
             DrawText2D(hint, 0.5f, 0.92f, 0.30f, false, alignCenter: true);
@@ -361,7 +350,8 @@ namespace EF.PoliceMod.Systems
 
                 if (rec.OptionId == 900)
                 {
-                    BuildCaseTeamOptions();
+                    // 当前版本仅开放单人案件入口（保留 CaseTeam 页面结构以便后续恢复）。
+                    BuildCaseList(CaseTeamMode.Single);
                 }
                 return;
             }
@@ -375,7 +365,8 @@ namespace EF.PoliceMod.Systems
                 }
                 else if (rec.OptionId == 911)
                 {
-                    BuildCaseList(CaseTeamMode.Dual);
+                    Notification.Show("~y~双人案件功能当前版本已关闭");
+                    BuildCaseList(CaseTeamMode.Single);
                 }
                 return;
             }
@@ -392,7 +383,7 @@ namespace EF.PoliceMod.Systems
         {
             if (_page == TerminalPage.CaseList)
             {
-                BuildCaseTeamOptions();
+                BuildRootOptions();
                 return;
             }
 
