@@ -1,4 +1,4 @@
-﻿using EF.PoliceMod.Core;
+using EF.PoliceMod.Core;
 using EF.PoliceMod.Core.Contracts;
 using GTA;
 using GTA.Math;
@@ -43,6 +43,7 @@ namespace EF.PoliceMod.Systems
             public int BlipHandle;
             public bool IsFollowing;
             public int LastFollowIssuedAtMs;
+            public int LastMovingAtMs;
         }
 
         private readonly List<BackupUnit> _backupUnits = new List<BackupUnit>();
@@ -371,10 +372,8 @@ namespace EF.PoliceMod.Systems
                                 }
                                 else
                                 {
-                                    // 玩家徒步时使用 FOLLOW 盯玩家实体，比 DriveToCoord 更不容易“原地不动/停在旧坐标”。
                                     Function.Call(Hash.TASK_VEHICLE_FOLLOW, drv.Handle, veh.Handle, player.Handle, FollowMaxSpeed, 786603, 12);
                                 }
-                            }
 
                             // 兜底：无论本帧是否重发跟随任务，都检测车辆是否长期低速并强制重规划。
                             float speed = 0f;
