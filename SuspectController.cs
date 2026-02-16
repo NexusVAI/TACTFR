@@ -61,7 +61,6 @@ namespace EF.PoliceMod.Gameplay
             EventBus.Subscribe<EF.PoliceMod.Core.SuspectDeliveredEvent>(OnSuspectDelivered);
             EventBus.Subscribe<DutyEndedEvent>(OnDutyEnded);
             EventBus.Subscribe<CaseEndedEvent>(OnCaseEnded);
-            EventBus.Subscribe<SuspectDeadEvent>(OnSuspectDead);
             // EventBus.Subscribe<EF.PoliceMod.Input.PlayerAimedAtPedEvent>(OnPlayerAimedAt); // TEMP 禁用
         }
 
@@ -75,27 +74,6 @@ namespace EF.PoliceMod.Gameplay
         private void OnCaseEnded(CaseEndedEvent e)
         {
             ForceClear();
-        }
-
-        private void OnSuspectDead(SuspectDeadEvent e)
-        {
-            int handle = -1;
-            try { handle = e.SuspectHandle; } catch { handle = -1; }
-            if (handle <= 0) return;
-
-            try { _busySuspects.Remove(handle); } catch { }
-            try { _compliantSuspects.Remove(handle); } catch { }
-            try { _resistingSuspects.Remove(handle); } catch { }
-
-            try
-            {
-                if (_currentSuspect != null && _currentSuspect.Exists() && _currentSuspect.Handle == handle)
-                {
-                    IsCompliant = false;
-                    IsResisting = false;
-                }
-            }
-            catch { }
         }
         private void OnSuspectDelivered(EF.PoliceMod.Core.SuspectDeliveredEvent e)
         {

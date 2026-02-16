@@ -348,7 +348,7 @@ namespace EF.PoliceMod.Input
 
 
             // F7：车队调度功能当前版本屏蔽（保留接口便于后续恢复）
-            if (IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.DispatchMenu) || IsRawKeyDown(System.Windows.Forms.Keys.F7))
+            if (IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.DispatchMenu))
             {
                 if (!_dispatchMenuHeld)
                 {
