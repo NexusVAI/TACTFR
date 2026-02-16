@@ -313,7 +313,7 @@ namespace EF.PoliceMod.Executors
 
         internal static class VehicleEscortLine
         {
-            internal const float DEFAULT_MAX_E_INTERACT_DISTANCE = 7.0f;
+            internal const float DEFAULT_MAX_E_INTERACT_DISTANCE = 9.5f;
 
             internal static bool IsCuffed(ArrestActionStyle style) => style == ArrestActionStyle.CuffAndLead;
             internal static bool ShouldAutoDoors(ArrestActionStyle style) => IsCuffed(style);
@@ -321,7 +321,8 @@ namespace EF.PoliceMod.Executors
 
             internal static float MaxEInteractDistance(ArrestActionStyle style)
             {
-                // 先给保守默认值：避免 E 在远处误触发造成状态机抖动
+                // 单人被拷线适当放宽，减少“明明在押送但 E 提示太远”的误判。
+                if (IsCuffed(style)) return 11.0f;
                 return DEFAULT_MAX_E_INTERACT_DISTANCE;
             }
         }
@@ -637,6 +638,7 @@ namespace EF.PoliceMod.Executors
                     if (!IsPlayerNearSuspectInteractionPoint(suspect, player, 0.2f))
                     {
                         ModLog.Info("[Escort][Vehicle] E pressed but suspect too far");
+                        Notification.Show("~y~嫌疑人距离过远，请先按 G 保持跟随并靠近后再按 E");
                         return;
                     }
                 }
