@@ -3,6 +3,7 @@ using EF.PoliceMod.Gameplay;
 using GTA;
 using GTA.Native;
 using System;
+using System.Collections.Generic;
 
 namespace EF.PoliceMod.Executors
 {
@@ -12,6 +13,8 @@ namespace EF.PoliceMod.Executors
     /// </summary>
     internal static class SuspectFollowOps
     {
+        private static readonly Dictionary<int, int> _busyTimestamps = new Dictionary<int, int>();
+        private const int BUSY_TIMEOUT_MS = 8000;
         public static void StartFollow(SuspectController suspectController, Ped suspect, ArrestActionStyle style)
         {
             if (suspectController == null) return;
@@ -20,11 +23,21 @@ namespace EF.PoliceMod.Executors
 
             try
             {
-                // 若已经 busy，则跳过（可能由其它 executor 占用）
+                // 若已经 busy，则检查是否超时，若超时则强制覆盖
                 if (suspectController.IsBusy(suspect))
                 {
-                    ModLog.Info($"[Escort] StartFollow skipped: suspect {suspect.Handle} is busy");
-                    return;
+                    int now = Game.GameTime;
+                    if (_busyTimestamps.TryGetValue(suspect.Handle, out int ts) && now - ts > BUSY_TIMEOUT_MS)
+                    {
+                        ModLog.Info($"[Escort] StartFollow: busy timeout, forcing follow for suspect {suspect.Handle}");
+                        try { suspectController.UnmarkBusy(suspect.Handle); } catch { }
+                        _busyTimestamps.Remove(suspect.Handle);
+                    }
+                    else
+                    {
+                        ModLog.Info($"[Escort] StartFollow skipped: suspect {suspect.Handle} is busy");
+                        return;
+                    }
                 }
             }
             catch (Exception ex)
@@ -44,6 +57,7 @@ namespace EF.PoliceMod.Executors
             {
                 // 标记 busy：防止其它逻辑破坏任务
                 try { suspectController.MarkBusy(suspect.Handle); } catch { }
+                _busyTimestamps[suspect.Handle] = Game.GameTime;
 
                 try
                 {
@@ -111,6 +125,7 @@ namespace EF.PoliceMod.Executors
             finally
             {
                 try { suspectController.UnmarkBusy(suspect.Handle); } catch { }
+                _busyTimestamps.Remove(suspect.Handle);
             }
         }
     }

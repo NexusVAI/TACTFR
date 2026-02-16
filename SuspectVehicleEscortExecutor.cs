@@ -451,103 +451,6 @@ namespace EF.PoliceMod.Executors
             catch { }
         }
 
-        private bool IsPlayerNearSuspectInteractionPoint(Ped suspect, Ped player, float extraPadding = 0.0f)
-        {
-            if (suspect == null || !suspect.Exists() || player == null || !player.Exists()) return false;
-
-            float baseDist = VehicleEscortLine.MaxEInteractDistance(GetStyle()) + extraPadding;
-            Vector3 playerPos = player.Position;
-            Vector3 suspectPos = suspect.Position;
-
-            try { if (playerPos.DistanceTo(suspectPos) <= baseDist) return true; } catch { }
-
-            // 被拷状态下增加两个交互点（左右两侧），降低双人案 E 交互失败率。
-            if (GetStyle() != ArrestActionStyle.CuffAndLead) return false;
-
-            try
-            {
-                Vector3 fwd = suspect.ForwardVector;
-                fwd.Z = 0f;
-                float fwdLenSq = (fwd.X * fwd.X) + (fwd.Y * fwd.Y) + (fwd.Z * fwd.Z);
-                if (fwdLenSq < 0.001f) fwd = Game.Player.Character.ForwardVector;
-                fwd.Normalize();
-
-                Vector3 right = new Vector3(fwd.Y, -fwd.X, 0f);
-                Vector3 p1 = suspectPos + right * 1.0f;
-                Vector3 p2 = suspectPos - right * 1.0f;
-                Vector3 p3 = suspectPos + right * 0.85f + fwd * 0.75f;
-                Vector3 p4 = suspectPos - right * 0.85f + fwd * 0.75f;
-                float pointRange = 1.7f + extraPadding;
-
-                if (playerPos.DistanceTo(p1) <= pointRange) return true;
-                if (playerPos.DistanceTo(p2) <= pointRange) return true;
-                if (playerPos.DistanceTo(p3) <= pointRange) return true;
-                if (playerPos.DistanceTo(p4) <= pointRange) return true;
-            }
-            catch { }
-
-            return false;
-        }
-
-        private bool IsCaseSuspectInteractable(Ped ped)
-        {
-            if (ped == null || !ped.Exists() || ped.IsDead) return false;
-
-            bool compliant = false;
-            try { compliant = _suspectController != null && _suspectController.IsHandleCompliant(ped.Handle); } catch { compliant = false; }
-            if (compliant) return true;
-
-            try
-            {
-                if (Function.Call<bool>(Hash.IS_PED_CUFFED, ped.Handle)) return true;
-            }
-            catch { }
-
-            return false;
-        }
-
-        private Ped TryResolveInteractSuspect(Ped current, Ped player)
-        {
-            if (current != null && current.Exists() && !current.IsDead)
-            {
-                if (IsPlayerNearSuspectInteractionPoint(current, player, 0.2f)) return current;
-            }
-
-            try
-            {
-                var mgr = EFCore.Instance?.GetCaseManager();
-                var handles = mgr?.SuspectHandles;
-                if (handles == null) return current;
-
-                Ped best = null;
-                float bestDist = 99999f;
-                foreach (var h in handles)
-                {
-                    if (h <= 0) continue;
-                    var ped = FindPedByHandle(h);
-                    if (!IsCaseSuspectInteractable(ped)) continue;
-                    if (!IsPlayerNearSuspectInteractionPoint(ped, player, 0.5f)) continue;
-
-                    float d = 99999f;
-                    try { d = ped.Position.DistanceTo(player.Position); } catch { d = 99999f; }
-                    if (d < bestDist)
-                    {
-                        bestDist = d;
-                        best = ped;
-                    }
-                }
-
-                if (best != null && best.Exists())
-                {
-                    try { _suspectController.TakeControl(best); } catch { }
-                    return best;
-                }
-            }
-            catch { }
-
-            return current;
-        }
-
         private void TryMakeSecondaryBoard(Ped suspect, Ped player)
         {
             if (suspect == null || !suspect.Exists() || suspect.IsDead) return;
@@ -568,21 +471,15 @@ namespace EF.PoliceMod.Executors
 
             try
             {
-                if (ShouldAutoDoors(GetStyle()))
-                {
-                    int doorIndex = NormalizeDoorIndex(targetVeh, GetDoorIndexForSeat(seat));
-                    try { VehicleDoorOps.OpenDoor(targetVeh, doorIndex); } catch { }
-                    try { _cuffedDoorFlow.ArmPendingShutDoor(targetVeh.Handle, doorIndex, suspect.Handle, Game.GameTime); } catch { }
-                }
+                int doorIndex = NormalizeDoorIndex(targetVeh, GetDoorIndexForSeat(seat));
+                try { VehicleDoorOps.OpenDoor(targetVeh, doorIndex); } catch { }
+                try { _cuffedDoorFlow.ArmPendingShutDoor(targetVeh.Handle, doorIndex, suspect.Handle, Game.GameTime); } catch { }
             }
             catch { }
 
             try { suspect.Task.ClearAll(); } catch { }
-            if (GetStyle() == ArrestActionStyle.CuffAndLead)
-            {
-                try { Function.Call(Hash.SET_ENABLE_HANDCUFFS, suspect.Handle, true); } catch { }
-                try { EnsureCuffedClipset(suspect); } catch { }
-            }
+            try { Function.Call(Hash.SET_ENABLE_HANDCUFFS, suspect.Handle, true); } catch { }
+            try { EnsureCuffedClipset(suspect); } catch { }
             try { suspect.Task.EnterVehicle(targetVeh, seat, -1, 1.6f); } catch { }
         }
 
@@ -618,7 +515,7 @@ namespace EF.PoliceMod.Executors
                 return;
             }
 
-            if (suspect.IsDead || suspect.IsRagdoll)
+            if (suspect.IsDead || (suspect.IsRagdoll && !_stateHub.Is(SuspectState.InVehicle)))
             {
                 ModLog.Warn("[Escort][Vehicle] E pressed but suspect not controllable");
                 return;
@@ -680,7 +577,7 @@ namespace EF.PoliceMod.Executors
                         // 近距触发保障
                         try
                         {
-                            if (!IsPlayerNearSuspectInteractionPoint(suspect, player, 0.2f))
+                            if (!IsPlayerNearSuspectInteractionPoint(suspect, player, 1.5f))
                             {
                                 Notification.Show("~y~离嫌疑人太远");
                                 return;
@@ -1183,9 +1080,23 @@ namespace EF.PoliceMod.Executors
         private void ResumeEscortOnFoot()
         {
             ModLog.Info("[Escort][Vehicle] Execute: ResumeEscortOnFoot");
-            // TODO: 恢复押送跟随
-            // Escort 状态下，Follow Executor 会自然接管
+        }
 
+        private Ped TryResolveInteractSuspect(Ped suspect, Ped player)
+        {
+            if (suspect != null && suspect.Exists()) return suspect;
+            var target = _suspectController.GetCurrentSuspect();
+            if (target != null && target.Exists()) return target;
+            return null;
+        }
+
+        private bool IsPlayerNearSuspectInteractionPoint(Ped suspect, Ped player, float threshold)
+        {
+            if (suspect == null || !suspect.Exists() || player == null || !player.Exists())
+                return false;
+            var suspectPos = suspect.Position;
+            var playerPos = player.Position;
+            return suspectPos.DistanceTo(playerPos) <= 1.5f; // 修复：从 0.2f 改为 1.5f，兼容押送时的实际距离
         }
     }
 }
