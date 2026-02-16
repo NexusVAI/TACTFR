@@ -347,23 +347,29 @@ namespace EF.PoliceMod.Input
 
 
 
-            // F7：调度菜单（仅执勤后可用）
+            // F7：车队调度功能当前版本屏蔽（保留接口便于后续恢复）
             if (IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.DispatchMenu))
             {
                 if (!_dispatchMenuHeld)
                 {
                     _dispatchMenuHeld = true;
 
-
-                    bool onDuty = false;
-                    try { onDuty = EF.PoliceMod.Systems.DutyQuery.IsOnDuty; } catch { onDuty = false; }
-                    if (!onDuty)
+                    if (!EF.PoliceMod.Core.FeatureGates.EnableF7Convoy)
                     {
-                        Notification.Show("~y~请先开始执勤");
-                        return;
+                        Notification.Show("~y~当前版本已暂时关闭 F7 车队功能");
                     }
+                    else
+                    {
+                        bool onDuty = false;
+                        try { onDuty = EF.PoliceMod.Systems.DutyQuery.IsOnDuty; } catch { onDuty = false; }
+                        if (!onDuty)
+                        {
+                            Notification.Show("~y~请先开始执勤");
+                            return;
+                        }
 
-                    EventBus.Publish(new Open911MenuEvent());
+                        EventBus.Publish(new Open911MenuEvent());
+                    }
                 }
             }
             else

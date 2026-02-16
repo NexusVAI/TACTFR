@@ -94,6 +94,12 @@ namespace EF.PoliceMod.Systems
 
         public void RequestBackup()
         {
+            if (!EF.PoliceMod.Core.FeatureGates.EnableF7Convoy)
+            {
+                Notification.Show("~y~当前版本已暂时关闭 F7 车队功能");
+                return;
+            }
+
             TrySpawnBackup();
         }
 
@@ -234,6 +240,12 @@ namespace EF.PoliceMod.Systems
 
         public void SetConvoyFollowPlayer()
         {
+            if (!EF.PoliceMod.Core.FeatureGates.EnableF7Convoy)
+            {
+                Notification.Show("~y~当前版本已暂时关闭 F7 车队功能");
+                return;
+            }
+
             int now = Game.GameTime;
             if (_convoyMode == ConvoyMode.FollowPlayer && (now - _lastFollowModeAtMs) < FollowModeDebounceMs)
                 return;
@@ -257,6 +269,11 @@ namespace EF.PoliceMod.Systems
 
         public void SetConvoyFreeRoam()
         {
+            if (!EF.PoliceMod.Core.FeatureGates.EnableF7Convoy)
+            {
+                return;
+            }
+
             _convoyMode = ConvoyMode.FreeRoam;
             _lastFreeRoamIssuedAtMs = 0;
             foreach (var u in _backupUnits)
@@ -270,6 +287,8 @@ namespace EF.PoliceMod.Systems
 
         public void TickUpdate()
         {
+            if (!EF.PoliceMod.Core.FeatureGates.EnableF7Convoy) return;
+
             try
             {
                 var player = Game.Player.Character;

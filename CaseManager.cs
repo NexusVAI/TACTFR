@@ -1039,9 +1039,17 @@ namespace EF.PoliceMod
 
             if (optionId >= 10 && optionId <= 15)
             {
-                forceDualSuspects = true;
                 optionId = optionId - 10;
-                ModLog.Info($"[CaseManager] Dual suspect case selected, base optionId={optionId}");
+                if (EF.PoliceMod.Core.FeatureGates.EnableDualSuspectCase)
+                {
+                    forceDualSuspects = true;
+                    ModLog.Info($"[CaseManager] Dual suspect case selected, base optionId={optionId}");
+                }
+                else
+                {
+                    forceDualSuspects = false;
+                    ModLog.Info($"[CaseManager] Dual suspect option received but feature disabled, fallback to single case optionId={optionId}");
+                }
             }
 
             if (optionId < 0 || optionId > 5)
@@ -1053,9 +1061,9 @@ namespace EF.PoliceMod
             _useTerminalPreset = true;
             _terminalOptionId = optionId;
             _terminalStars = Math.Max(1, Math.Min(5, stars));
-            _forceDualSuspects = forceDualSuspects;
+            _forceDualSuspects = EF.PoliceMod.Core.FeatureGates.EnableDualSuspectCase && forceDualSuspects;
 
-            if (forceDualSuspects)
+            if (_forceDualSuspects)
             {
                 _terminalStars = Math.Max(4, _terminalStars);
             }
@@ -1393,8 +1401,8 @@ namespace EF.PoliceMod
                 _primarySuspectIndex = 0;
                 RegisterCaseSuspect(_suspect, 0, true);
 
-                // 规则：终端强制或终端预设且星级>=4
-                bool wantTwo = _forceDualSuspects || (_useTerminalPreset && _terminalStars >= 4);
+                // 双人案件开关（默认关闭）：仅当显式启用且终端选择双人模板时才生效。
+                bool wantTwo = EF.PoliceMod.Core.FeatureGates.EnableDualSuspectCase && _forceDualSuspects;
 
                 ModLog.Info($"[CaseManager] Dual suspect: wantTwo={wantTwo}, forceDual={_forceDualSuspects}");
 
