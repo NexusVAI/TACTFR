@@ -322,7 +322,7 @@ namespace EF.PoliceMod.Executors
             internal static float MaxEInteractDistance(ArrestActionStyle style)
             {
                 // 单人被拷线适当放宽，减少“明明在押送但 E 提示太远”的误判。
-                if (IsCuffed(style)) return 11.0f;
+                if (IsCuffed(style)) return 12.5f;
                 return DEFAULT_MAX_E_INTERACT_DISTANCE;
             }
         }
@@ -462,6 +462,21 @@ namespace EF.PoliceMod.Executors
 
             try { if (playerPos.DistanceTo(suspectPos) <= baseDist) return true; } catch { }
 
+            // 玩家在车内时，允许按“玩家车位”进行近距判定，避免仅按玩家骨骼点导致误报太远。
+            try
+            {
+                if (player.IsInVehicle())
+                {
+                    var pv = player.CurrentVehicle;
+                    if (pv != null && pv.Exists())
+                    {
+                        float vehDist = pv.Position.DistanceTo(suspectPos);
+                        if (vehDist <= (baseDist + 2.5f)) return true;
+                    }
+                }
+            }
+            catch { }
+
             // 被拷状态下增加两个交互点（左右两侧），降低双人案 E 交互失败率。
             if (GetStyle() != ArrestActionStyle.CuffAndLead) return false;
 
@@ -478,7 +493,7 @@ namespace EF.PoliceMod.Executors
                 Vector3 p2 = suspectPos - right * 1.0f;
                 Vector3 p3 = suspectPos + right * 0.85f + fwd * 0.75f;
                 Vector3 p4 = suspectPos - right * 0.85f + fwd * 0.75f;
-                float pointRange = 1.7f + extraPadding;
+                float pointRange = 2.2f + extraPadding;
 
                 if (playerPos.DistanceTo(p1) <= pointRange) return true;
                 if (playerPos.DistanceTo(p2) <= pointRange) return true;
