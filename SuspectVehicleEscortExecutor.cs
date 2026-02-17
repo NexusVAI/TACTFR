@@ -37,6 +37,7 @@ namespace EF.PoliceMod.Executors
                                           // 配置：是否强制先按 G 让嫌疑人跟随，才能按 E 让其上车
                                           // 强制：必须先按 G 让嫌疑人进入“跟随/押送”状态，才允许按 E 让其上车。
         private bool _requireFollowBeforeBoard = true;
+        private int _lastVehicleInteractRejectAtMs = 0;
 
         // 玩家上下车边沿检测：实现“玩家上车后嫌疑人自动上车 / 玩家下车后嫌疑人自动下车”
         private bool _wasPlayerInVehicle = false;
@@ -494,6 +495,29 @@ namespace EF.PoliceMod.Executors
         private void StopSuspectFollow(Ped suspect)
         {
             SuspectFollowOps.StopFollow(_suspectController, suspect);
+        }
+
+        private bool IsVehicleBoardingContextNear(Ped suspect, Ped player, Vehicle vehicle, float maxDist)
+        {
+            try
+            {
+                if (vehicle == null || !vehicle.Exists() || suspect == null || !suspect.Exists() || player == null || !player.Exists()) return false;
+
+                // 玩家在车门附近 + 嫌疑人在车辆附近即可触发上车，不再死卡玩家-嫌疑人点位。
+                float playerToVeh = player.Position.DistanceTo(vehicle.Position);
+                float suspectToVeh = suspect.Position.DistanceTo(vehicle.Position);
+                if (playerToVeh <= 7.0f && suspectToVeh <= maxDist) return true;
+            }
+            catch { }
+            return false;
+        }
+
+        private void NotifyVehicleInteractReject(string message, int debounceMs = 800)
+        {
+            int now = Game.GameTime;
+            if ((now - _lastVehicleInteractRejectAtMs) < debounceMs) return;
+            _lastVehicleInteractRejectAtMs = now;
+            Notification.Show(message);
         }
 
 
