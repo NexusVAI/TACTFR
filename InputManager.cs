@@ -23,6 +23,7 @@ namespace EF.PoliceMod.Input
         private bool _pullOverExitHeld = false;
         private bool _dispatchMenuHeld = false;
         private bool _lockHeld = false;
+        private bool _unlockHeld = false;
         private bool _f8Held = false;
         private bool _hHeldRaw = false;
         private bool _gHeldRaw = false;
@@ -240,6 +241,30 @@ namespace EF.PoliceMod.Input
                 // 可能需要在 SuspectController/CaseManager 定位到被击中的 suspect 并由其发出 PlayerShotPedEvent
             }
 
+            // F7（调度菜单）优先处理：放在 UI 接管前，避免 UI 状态残留时按键被提前 return 吃掉。
+            if (IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.DispatchMenu) || IsRawKeyDown(System.Windows.Forms.Keys.F7))
+            {
+                if (!_dispatchMenuHeld)
+                {
+                    _dispatchMenuHeld = true;
+
+                    bool onDuty = false;
+                    try { onDuty = EF.PoliceMod.Systems.DutyQuery.IsOnDuty; } catch { onDuty = false; }
+                    if (!onDuty)
+                    {
+                        Notification.Show("~y~请先开始执勤");
+                    }
+                    else
+                    {
+                        EventBus.Publish(new Open911MenuEvent());
+                    }
+                }
+            }
+            else
+            {
+                _dispatchMenuHeld = false;
+            }
+
             // 如果 UI 正在打开中（接管输入），就不要继续发布其他输入事件
             // PoliceTerminalUI / DispatchMenuController 自行处理按键
             if (EF.PoliceMod.Core.UIState.IsPoliceTerminalOpen
@@ -301,6 +326,31 @@ namespace EF.PoliceMod.Input
                 _lockHeld = false;
             }
 
+            // CTRL：瞄准当前锁定目标时手动解锁（按一次生效）
+            bool ctrlDown = IsRawKeyDown(Keys.ControlKey) || IsRawKeyDown(Keys.LControlKey) || IsRawKeyDown(Keys.RControlKey);
+            if (ctrlDown)
+            {
+                if (!_unlockHeld)
+                {
+                    _unlockHeld = true;
+                    try
+                    {
+                        var core = EFCore.Instance;
+                        var lts = core != null ? core.LockTargetSystem : null;
+                        if (lts != null && lts.HasTarget && lts.IsPlayerAimingCurrentTarget())
+                        {
+                            EventBus.Publish(new LockTargetClearRequestedEvent());
+                            Notification.Show("~y~已解除锁定");
+                        }
+                    }
+                    catch { }
+                }
+            }
+            else
+            {
+                _unlockHeld = false;
+            }
+
             // H 拘捕已由“拘捕动作菜单”接管（见上方 OpenArrestActionMenuEvent），这里不再重复发布。
             // F10: 切换帮助文本（去抖：按住只触发一次）
             if (Game.IsKeyPressed(EF.PoliceMod.Core.KeyBindings.ToggleHelp))
@@ -321,29 +371,7 @@ namespace EF.PoliceMod.Input
 
 
 
-            // F7：调度菜单（仅执勤后可用）
-            if (IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.DispatchMenu))
-            {
-                if (!_dispatchMenuHeld)
-                {
-                    _dispatchMenuHeld = true;
 
-
-                    bool onDuty = false;
-                    try { onDuty = EF.PoliceMod.Systems.DutyQuery.IsOnDuty; } catch { onDuty = false; }
-                    if (!onDuty)
-                    {
-                        Notification.Show("~y~请先开始执勤");
-                        return;
-                    }
-
-                    EventBus.Publish(new Open911MenuEvent());
-                }
-            }
-            else
-            {
-                _dispatchMenuHeld = false;
-            }
 
             // F8：警员小队控制菜单（仅执勤后可用）
             if (Game.IsKeyPressed(EF.PoliceMod.Core.KeyBindings.OfficerSquadMenu))
