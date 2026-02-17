@@ -1,4 +1,4 @@
-﻿using EF.PoliceMod.Core;
+using EF.PoliceMod.Core;
 using EF.PoliceMod.Core.Contracts;
 using GTA;
 using GTA.Math;
@@ -15,7 +15,7 @@ namespace EF.PoliceMod.Systems
         private int _lastActionAtMs = 0;
         private const int CooldownMs = 1200;
 
-        private const int FollowUpdateDebounceMs = 400;
+        private const int FollowUpdateDebounceMs = 150;
         private int _lastFollowUpdateAtMs = 0;
         private const int FollowModeDebounceMs = 600;
         private int _lastFollowModeAtMs = 0;
@@ -258,7 +258,6 @@ namespace EF.PoliceMod.Systems
             {
                 u.IsFollowing = false;
                 u.LastFollowIssuedAtMs = 0;
-                u.LastMovingAtMs = 0;
             }
             ModLog.Info($"[Dispatch] SetConvoyFollowPlayer called, units={_backupUnits.Count}");
             Notification.Show("~b~支援车队：跟随玩家");
@@ -282,7 +281,6 @@ namespace EF.PoliceMod.Systems
             {
                 u.IsFollowing = false;
                 u.LastFollowIssuedAtMs = 0;
-                u.LastMovingAtMs = 0;
             }
             ModLog.Info($"[Dispatch] SetConvoyFreeRoam called, units={_backupUnits.Count}");
             Notification.Show("~y~支援车队：自由行动");
@@ -341,9 +339,9 @@ namespace EF.PoliceMod.Systems
 
                             // 周期性重发“跟随任务”：按“每个单位”去抖，避免只刷新第一辆车导致其余车辆掉队后不再跟随
                             bool shouldIssue = (!u.IsFollowing) || (now - u.LastFollowIssuedAtMs >= FollowUpdateDebounceMs);
-                            if (shouldIssue)
-                            {
-                                u.LastFollowIssuedAtMs = now;
+                            if (!shouldIssue) continue;
+
+                            u.LastFollowIssuedAtMs = now;
 
                                 try { drv.Task.ClearAll(); } catch { }
                                 u.IsFollowing = true;
@@ -374,9 +372,31 @@ namespace EF.PoliceMod.Systems
                                 }
                                 else
                                 {
-                                    // 玩家徒步时使用 FOLLOW 盯玩家实体，比 DriveToCoord 更不容易“原地不动/停在旧坐标”。
                                     Function.Call(Hash.TASK_VEHICLE_FOLLOW, drv.Handle, veh.Handle, player.Handle, FollowMaxSpeed, 786603, 12);
                                 }
+
+                            // 兜底：无论本帧是否重发跟随任务，都检测车辆是否长期低速并强制重规划。
+                            float speed = 0f;
+                            try { speed = veh.Speed; } catch { speed = 0f; }
+                            if (speed >= 1.8f)
+                            {
+                                u.LastMovingAtMs = now;
+                            }
+
+                            // 兜底：无论本帧是否重发跟随任务，都检测车辆是否长期低速并强制重规划。
+                            float speed = 0f;
+                            try { speed = veh.Speed; } catch { speed = 0f; }
+                            if (speed >= 1.8f)
+                            {
+                                u.LastMovingAtMs = now;
+                            }
+
+                            // 兜底：无论本帧是否重发跟随任务，都检测车辆是否长期低速并强制重规划。
+                            float speed = 0f;
+                            try { speed = veh.Speed; } catch { speed = 0f; }
+                            if (speed >= 1.8f)
+                            {
+                                u.LastMovingAtMs = now;
                             }
 
                             // 兜底：无论本帧是否重发跟随任务，都检测车辆是否长期低速并强制重规划。
@@ -388,15 +408,8 @@ namespace EF.PoliceMod.Systems
                             }
                             else
                             {
-                                if (u.LastMovingAtMs <= 0) u.LastMovingAtMs = now;
-                                if (now - u.LastMovingAtMs > 3500)
-                                {
-                                    Vector3 dest = player.Position;
-                                    try { Function.Call(Hash.TASK_VEHICLE_DRIVE_TO_COORD_LONGRANGE, drv.Handle, veh.Handle, dest.X, dest.Y, dest.Z, FollowMaxSpeed, 786603, 8.0f); } catch { }
-                                    u.LastMovingAtMs = now;
-                                    u.LastFollowIssuedAtMs = 0;
-                                    u.IsFollowing = false;
-                                }
+                                // 玩家徒步时使用 FOLLOW 盯玩家实体，比 DriveToCoord 更不容易“原地不动/停在旧坐标”。
+                                Function.Call(Hash.TASK_VEHICLE_FOLLOW, drv.Handle, veh.Handle, player.Handle, FollowMaxSpeed, 786603, 12);
                             }
 
                             // 鍏滃簳锛氭湁鏃?AI 浼?鎵撴柟鍚戠洏浣嗕笉韪╂补闂?锛岃繖閲屽己鍒舵澗鍒硅溅/鍚姩寮曟搸骞剁粰涓€鐐瑰墠杩涢€熷害鎻愮ず
@@ -536,7 +549,6 @@ namespace EF.PoliceMod.Systems
             BlipHandle = blipHandle,
             IsFollowing = false,
             LastFollowIssuedAtMs = 0,
-            LastMovingAtMs = 0,
         });
 
         SmsNotification.Show("911调度", "支援已派出", "支援车队正在巡逻，按F7选择跟随");

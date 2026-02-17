@@ -1908,8 +1908,6 @@ namespace EF.PoliceMod
             }
 
             try { ResetEscortPipelineState("CleanupCase"); } catch { }
-            try { EFCore.Instance?.LockTargetSystem?.ForceClear(); } catch { }
-            try { EFCore.Instance?.GetSuspectController()?.ForceClear(); } catch { }
 
             _caseActive = false;
 

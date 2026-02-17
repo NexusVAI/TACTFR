@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using GTA;
 using GTA.Native;
+using GTA.UI;
 using EF.PoliceMod.Data;
 using EF.PoliceMod.Core;
 using System.Runtime.InteropServices;

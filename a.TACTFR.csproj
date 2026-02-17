@@ -91,6 +91,7 @@
     <Compile Include="EFCore.cs" />
     <Compile Include="EntityTracker.cs" />
     <Compile Include="EventBus.cs" />
+    <Compile Include="FeatureGates.cs" />
     <Compile Include="HeliReconRequestedEvent.cs" />
     <Compile Include="HeliReconSystem.cs" />
     <Compile Include="HelpController.cs" />
