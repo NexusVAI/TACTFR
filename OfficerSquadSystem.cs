@@ -73,6 +73,9 @@ namespace EF.PoliceMod.Systems
         // 抓捕模式追捕：持续刷新目标位置（嫌疑人会移动），并做去抖避免每帧狂刷任务
         private int _lastPursuitTaskAtMs = 0;
         private const int PursuitTaskDebounceMs = 800;
+        private int _lastFarArrestWarnAtMs = 0;
+        private const int FarArrestWarnCooldownMs = 1800;
+        private const float MaxSquadArrestDistanceFromPlayer = 75.0f;
 
         // 远离玩家时自动补发“跟随”任务，确保小队一直跟着你
         // NOTE: Hold（原地待命）时应禁止该逻辑，否则会出现“待命但离远又追上来”的不合理表现
@@ -419,6 +422,39 @@ namespace EF.PoliceMod.Systems
             if (suspect == null || !suspect.Exists()) suspect = lts?.CurrentSuspect;
             if (suspect == null || !suspect.Exists()) { ResetAimTrack(); return; }
 
+            try
+            {
+                if (suspect.IsDead)
+                {
+                    _arrestMode = false;
+                    ResetAimTrack();
+                    Notification.Show("~y~目标已死亡，已自动关闭小队抓捕模式");
+                    return;
+                }
+            }
+            catch { }
+
+            try
+            {
+                var player = Game.Player.Character;
+                if (player != null && player.Exists())
+                {
+                    float distToPlayer = suspect.Position.DistanceTo(player.Position);
+                    if (distToPlayer > MaxSquadArrestDistanceFromPlayer)
+                    {
+                        int nowWarn = Game.GameTime;
+                        if (nowWarn - _lastFarArrestWarnAtMs >= FarArrestWarnCooldownMs)
+                        {
+                            _lastFarArrestWarnAtMs = nowWarn;
+                            Notification.Show("~y~嫌疑人距离过远，无法要求小队步行逮捕");
+                        }
+                        ResetAimTrack();
+                        return;
+                    }
+                }
+            }
+            catch { }
+
             // 绑定当前案件嫌疑人：若还没 TakeControl，就在这里接管（实现“锁定->小队自动拘捕”闭环）
             try
             {
@@ -430,13 +466,14 @@ namespace EF.PoliceMod.Systems
             }
             catch { }
 
-            // 已经拘捕/可押送：直接退出抓捕模式，避免重复循环
+            // 已经拘捕/可押送：自动关闭抓捕模式，避免重复循环
             try
             {
                 var cur = _suspectController?.GetCurrentSuspect();
                 if (cur != null && cur.Exists() && cur.Handle == suspect.Handle && _suspectController.IsCompliant && !_suspectController.IsResisting)
                 {
-                    // 已经控制住：保持抓捕模式开关不变，避免造成“需要关掉才生效/反了”的错觉
+                    _arrestMode = false;
+                    Notification.Show("~g~目标已被控制，抓捕模式已自动关闭");
                     ResetAimTrack();
                     return;
                 }
@@ -631,7 +668,8 @@ namespace EF.PoliceMod.Systems
             _lastCuffedSuspectHandle = suspect.Handle;
             _lastCuffAtMs = now;
 
-            // 抓捕完成：不自动关闭抓捕模式（由玩家手动关），这里只做去重即可
+            // 抓捕完成后自动关闭抓捕模式，避免继续尝试抓捕无效目标。
+            _arrestMode = false;
 
             // 延迟后处理：让警员恢复跟随，避免一直站着变“雕像”
             // 窗口过长会导致“同步场景结束后姿态掉一段时间”；缩短让后处理更快接管
@@ -640,7 +678,7 @@ namespace EF.PoliceMod.Systems
             _postCuffCuffOfficerHandle = cuffOfficer.Handle;
             _postCuffCoverOfficerHandle = (coverOfficer != null && coverOfficer.Exists()) ? coverOfficer.Handle : 0;
 
-            Notification.Show("~g~小队已上拷：按 G 押送");
+            Notification.Show("~g~小队已上拷：抓捕模式已自动关闭，按 G 押送");
             ResetAimTrack();
         }
 
