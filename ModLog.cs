@@ -7,7 +7,7 @@ namespace EF.PoliceMod.Core
     public static class ModLog
     {
         private static readonly string LogPath =
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "EF_PoliceMod.log");
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TACTFR.log");
 
         public static bool Enabled = true;
 

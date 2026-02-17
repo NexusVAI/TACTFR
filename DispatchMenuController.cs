@@ -195,10 +195,18 @@ namespace EF.PoliceMod.Systems
             // 用原始按键状态：在某些 UI/控制接管情况下，Game.IsKeyPressed 可能检测不到
             bool closeDown = IsRawKeyDown(Keys.F7) || IsRawKeyDown(Keys.Back);
             bool canClose = (now - _openedAtMs) > 250;
-            if (closeDown && canClose)
+            if (closeDown)
             {
-                Close();
-                return;
+                if (canClose && !_closeHeld)
+                {
+                    Close();
+                    return;
+                }
+                _closeHeld = true;
+            }
+            else
+            {
+                _closeHeld = false;
             }
 
             // 上/下/确认：小键盘 8/2/5

@@ -33,7 +33,7 @@ namespace EF.PoliceMod.Systems
         private int _pulledOverReadyAtMs = 0;
 
         // I 逼停指令最大有效距离（不要求贴脸；过远仍禁止，避免跨半张地图控车）
-        private const float MaxPullOverCommandDistance = 120f;
+        private const float MaxPullOverCommandDistance = 75f;
 
         private bool _pulledOverReady = false;   // 已停稳，可进入下车流程
         private bool _exitRequested = false;     // 已下达下车
