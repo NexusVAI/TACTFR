@@ -17,6 +17,8 @@ namespace EF.PoliceMod.Systems
 
         private const int FollowUpdateDebounceMs = 400;
         private int _lastFollowUpdateAtMs = 0;
+        private const int FollowModeDebounceMs = 600;
+        private int _lastFollowModeAtMs = 0;
         private const float FollowMaxSpeed = 32.0f;
         private bool _initialized = false;
 
@@ -40,6 +42,8 @@ namespace EF.PoliceMod.Systems
             public int[] CopHandles;
             public int BlipHandle;
             public bool IsFollowing;
+            public int LastFollowIssuedAtMs;
+            public int LastMovingAtMs;
         }
 
         private readonly List<BackupUnit> _backupUnits = new List<BackupUnit>();
@@ -91,6 +95,12 @@ namespace EF.PoliceMod.Systems
 
         public void RequestBackup()
         {
+            if (!EF.PoliceMod.Core.FeatureGates.EnableF7Convoy)
+            {
+                Notification.Show("~y~当前版本已暂时关闭 F7 车队功能");
+                return;
+            }
+
             TrySpawnBackup();
         }
 
@@ -231,6 +241,12 @@ namespace EF.PoliceMod.Systems
 
         public void SetConvoyFollowPlayer()
         {
+            if (!EF.PoliceMod.Core.FeatureGates.EnableF7Convoy)
+            {
+                Notification.Show("~y~当前版本已暂时关闭 F7 车队功能");
+                return;
+            }
+
             int now = Game.GameTime;
             if (_convoyMode == ConvoyMode.FollowPlayer && (now - _lastFollowModeAtMs) < FollowModeDebounceMs)
                 return;
@@ -238,7 +254,12 @@ namespace EF.PoliceMod.Systems
             _lastFollowModeAtMs = now;
             _convoyMode = ConvoyMode.FollowPlayer;
             _lastFollowUpdateAtMs = 0;
-            foreach (var u in _backupUnits) u.IsFollowing = false;
+            foreach (var u in _backupUnits)
+            {
+                u.IsFollowing = false;
+                u.LastFollowIssuedAtMs = 0;
+                u.LastMovingAtMs = 0;
+            }
             ModLog.Info($"[Dispatch] SetConvoyFollowPlayer called, units={_backupUnits.Count}");
             Notification.Show("~b~支援车队：跟随玩家");
 
@@ -250,15 +271,27 @@ namespace EF.PoliceMod.Systems
 
         public void SetConvoyFreeRoam()
         {
+            if (!EF.PoliceMod.Core.FeatureGates.EnableF7Convoy)
+            {
+                return;
+            }
+
             _convoyMode = ConvoyMode.FreeRoam;
             _lastFreeRoamIssuedAtMs = 0;
-            foreach (var u in _backupUnits) u.IsFollowing = false;
+            foreach (var u in _backupUnits)
+            {
+                u.IsFollowing = false;
+                u.LastFollowIssuedAtMs = 0;
+                u.LastMovingAtMs = 0;
+            }
             ModLog.Info($"[Dispatch] SetConvoyFreeRoam called, units={_backupUnits.Count}");
             Notification.Show("~y~支援车队：自由行动");
         }
 
         public void TickUpdate()
         {
+            if (!EF.PoliceMod.Core.FeatureGates.EnableF7Convoy) return;
+
             try
             {
                 var player = Game.Player.Character;
@@ -293,48 +326,77 @@ namespace EF.PoliceMod.Systems
 
                         try
                         {
+                            bool driverInVeh = false;
+                            try { driverInVeh = drv.IsInVehicle(veh); } catch { driverInVeh = false; }
+                            if (!driverInVeh)
+                            {
+                                try { Function.Call(Hash.SET_PED_INTO_VEHICLE, drv.Handle, veh.Handle, -1); } catch { }
+                                try { drv.Task.EnterVehicle(veh, VehicleSeat.Driver); } catch { }
+                                u.IsFollowing = false;
+                                continue;
+                            }
                             try { Function.Call(Hash.SET_VEHICLE_ENGINE_ON, veh.Handle, true, true, false); } catch { }
                             try { Function.Call(Hash.SET_DRIVER_ABILITY, drv.Handle, 1.0f); } catch { }
                             try { Function.Call(Hash.SET_DRIVER_RACING_MODIFIER, drv.Handle, 1.0f); } catch { }
 
-                            // 周期性重发“跟随任务”：避免 AI/碰撞/战斗状态把任务打断后不再跟随
-                            bool shouldIssue = (!u.IsFollowing) || (now - _lastFollowUpdateAtMs >= FollowUpdateDebounceMs);
-                            if (!shouldIssue) continue;
-
-                            if (now - _lastFollowUpdateAtMs >= FollowUpdateDebounceMs)
-                                _lastFollowUpdateAtMs = now;
-
-                            try { drv.Task.ClearAll(); } catch { }
-                            u.IsFollowing = true;
-
-                            if (pv != null && pv.Exists())
+                            // 周期性重发“跟随任务”：按“每个单位”去抖，避免只刷新第一辆车导致其余车辆掉队后不再跟随
+                            bool shouldIssue = (!u.IsFollowing) || (now - u.LastFollowIssuedAtMs >= FollowUpdateDebounceMs);
+                            if (shouldIssue)
                             {
-                                bool escorted = false;
-                                try
-                                {
-                                    Function.Call(Hash.TASK_VEHICLE_ESCORT,
-                                        drv.Handle,
-                                        veh.Handle,
-                                        pv.Handle,
-                                        -1,
-                                        FollowMaxSpeed,
-                                        786603,
-                                        18.0f,
-                                        8,
-                                        0.0f);
-                                    escorted = true;
-                                }
-                                catch { escorted = false; }
+                                u.LastFollowIssuedAtMs = now;
 
-                                if (!escorted)
+                                try { drv.Task.ClearAll(); } catch { }
+                                u.IsFollowing = true;
+
+                                if (pv != null && pv.Exists())
                                 {
-                                    Function.Call(Hash.TASK_VEHICLE_FOLLOW, drv.Handle, veh.Handle, pv.Handle, FollowMaxSpeed, 786603, 8);
+                                    bool escorted = false;
+                                    try
+                                    {
+                                        Function.Call(Hash.TASK_VEHICLE_ESCORT,
+                                            drv.Handle,
+                                            veh.Handle,
+                                            pv.Handle,
+                                            -1,
+                                            FollowMaxSpeed,
+                                            786603,
+                                            18.0f,
+                                            8,
+                                            0.0f);
+                                        escorted = true;
+                                    }
+                                    catch { escorted = false; }
+
+                                    if (!escorted)
+                                    {
+                                        Function.Call(Hash.TASK_VEHICLE_FOLLOW, drv.Handle, veh.Handle, pv.Handle, FollowMaxSpeed, 786603, 8);
+                                    }
                                 }
+                                else
+                                {
+                                    // 玩家徒步时使用 FOLLOW 盯玩家实体，比 DriveToCoord 更不容易“原地不动/停在旧坐标”。
+                                    Function.Call(Hash.TASK_VEHICLE_FOLLOW, drv.Handle, veh.Handle, player.Handle, FollowMaxSpeed, 786603, 12);
+                                }
+                            }
+
+                            // 兜底：无论本帧是否重发跟随任务，都检测车辆是否长期低速并强制重规划。
+                            float speed = 0f;
+                            try { speed = veh.Speed; } catch { speed = 0f; }
+                            if (speed >= 1.8f)
+                            {
+                                u.LastMovingAtMs = now;
                             }
                             else
                             {
-                                Vector3 dest = player.Position;
-                                Function.Call(Hash.TASK_VEHICLE_DRIVE_TO_COORD, drv.Handle, veh.Handle, dest.X, dest.Y, dest.Z, FollowMaxSpeed, 0, veh.Model.Hash, 786603, 6.0f, 3.0f);
+                                if (u.LastMovingAtMs <= 0) u.LastMovingAtMs = now;
+                                if (now - u.LastMovingAtMs > 3500)
+                                {
+                                    Vector3 dest = player.Position;
+                                    try { Function.Call(Hash.TASK_VEHICLE_DRIVE_TO_COORD_LONGRANGE, drv.Handle, veh.Handle, dest.X, dest.Y, dest.Z, FollowMaxSpeed, 786603, 8.0f); } catch { }
+                                    u.LastMovingAtMs = now;
+                                    u.LastFollowIssuedAtMs = 0;
+                                    u.IsFollowing = false;
+                                }
                             }
 
                             // 鍏滃簳锛氭湁鏃?AI 浼?鎵撴柟鍚戠洏浣嗕笉韪╂补闂?锛岃繖閲屽己鍒舵澗鍒硅溅/鍚姩寮曟搸骞剁粰涓€鐐瑰墠杩涢€熷害鎻愮ず
@@ -348,8 +410,6 @@ namespace EF.PoliceMod.Systems
                             try { Function.Call(Hash.SET_VEHICLE_UNDRIVEABLE, veh.Handle, false); } catch { }
                             try { Function.Call(Hash.SET_VEHICLE_IS_CONSIDERED_BY_PLAYER, veh.Handle, true); } catch { }
 
-                            if (now - _lastFollowUpdateAtMs >= FollowUpdateDebounceMs)
-                                _lastFollowUpdateAtMs = now;
                         }
                         catch (Exception ex) { ModLog.Error($"[Dispatch] Follow error: {ex}"); }
                     }
@@ -474,6 +534,9 @@ namespace EF.PoliceMod.Systems
                         p3 != null && p3.Exists() ? p3.Handle : 0,
                     },
             BlipHandle = blipHandle,
+            IsFollowing = false,
+            LastFollowIssuedAtMs = 0,
+            LastMovingAtMs = 0,
         });
 
         SmsNotification.Show("911调度", "支援已派出", "支援车队正在巡逻，按F7选择跟随");
