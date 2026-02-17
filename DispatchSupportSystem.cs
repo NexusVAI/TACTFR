@@ -390,6 +390,14 @@ namespace EF.PoliceMod.Systems
                             {
                                 u.LastMovingAtMs = now;
                             }
+
+                            // 兜底：无论本帧是否重发跟随任务，都检测车辆是否长期低速并强制重规划。
+                            float speed = 0f;
+                            try { speed = veh.Speed; } catch { speed = 0f; }
+                            if (speed >= 1.8f)
+                            {
+                                u.LastMovingAtMs = now;
+                            }
                             else
                             {
                                 // 玩家徒步时使用 FOLLOW 盯玩家实体，比 DriveToCoord 更不容易“原地不动/停在旧坐标”。
