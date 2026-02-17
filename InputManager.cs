@@ -347,10 +347,8 @@ namespace EF.PoliceMod.Input
 
 
 
-
-
-            // F7：调度菜单（支持配置键 + 硬编码 F7 兜底）
-            if (IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.DispatchMenu) || IsRawKeyDown(System.Windows.Forms.Keys.F7))
+            // F7：车队调度功能当前版本屏蔽（保留接口便于后续恢复）
+            if (IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.DispatchMenu))
             {
                 if (!_dispatchMenuHeld)
                 {
@@ -367,11 +365,10 @@ namespace EF.PoliceMod.Input
                         if (!onDuty)
                         {
                             Notification.Show("~y~请先开始执勤");
+                            return;
                         }
-                        else
-                        {
-                            EventBus.Publish(new Open911MenuEvent());
-                        }
+
+                        EventBus.Publish(new Open911MenuEvent());
                     }
                 }
             }

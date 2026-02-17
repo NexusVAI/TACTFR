@@ -207,9 +207,8 @@ namespace EF.PoliceMod.Gameplay
                 {
                     if (target.Handle == _currentTarget.Handle)
                     {
-                        int sameSlot = GetCaseSlotIndex(target.Handle);
-                        if (sameSlot >= 0) Notification.Show($"~g~已锁定嫌疑人({sameSlot + 1})");
-                        else Notification.Show(_allowLockAnyPed ? "~g~已锁定目标" : "~g~已锁定嫌疑人");
+                        ForceClear();
+                        Notification.Show("~y~已解除锁定");
                         return;
                     }
 
@@ -236,9 +235,8 @@ namespace EF.PoliceMod.Gameplay
                         return;
                     }
 
-                    int curSlot = GetCaseSlotIndex(_currentTarget != null && _currentTarget.Exists() ? _currentTarget.Handle : -1);
-                    if (curSlot >= 0) Notification.Show($"~y~只能在本案嫌疑人间切换（当前：嫌疑人({curSlot + 1})）");
-                    else Notification.Show("~y~当前目标不在本案，保持现有锁定");
+                    ForceClear();
+                    Notification.Show("~y~已解除锁定");
                     return;
                 }
                 catch { }
