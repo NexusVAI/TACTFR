@@ -241,6 +241,37 @@ namespace EF.PoliceMod.Input
                 // 可能需要在 SuspectController/CaseManager 定位到被击中的 suspect 并由其发出 PlayerShotPedEvent
             }
 
+            // F7（调度菜单）优先处理：放在 UI 接管前，避免 UI 状态残留时按键被提前 return 吃掉。
+            if (IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.DispatchMenu) || IsRawKeyDown(System.Windows.Forms.Keys.F7))
+            {
+                if (!_dispatchMenuHeld)
+                {
+                    _dispatchMenuHeld = true;
+
+                    if (!EF.PoliceMod.Core.FeatureGates.EnableF7Convoy)
+                    {
+                        Notification.Show("~y~当前版本已暂时关闭 F7 车队功能");
+                    }
+                    else
+                    {
+                        bool onDuty = false;
+                        try { onDuty = EF.PoliceMod.Systems.DutyQuery.IsOnDuty; } catch { onDuty = false; }
+                        if (!onDuty)
+                        {
+                            Notification.Show("~y~请先开始执勤");
+                        }
+                        else
+                        {
+                            EventBus.Publish(new Open911MenuEvent());
+                        }
+                    }
+                }
+            }
+            else
+            {
+                _dispatchMenuHeld = false;
+            }
+
             // 如果 UI 正在打开中（接管输入），就不要继续发布其他输入事件
             // PoliceTerminalUI / DispatchMenuController 自行处理按键
             if (EF.PoliceMod.Core.UIState.IsPoliceTerminalOpen

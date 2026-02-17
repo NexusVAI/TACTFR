@@ -543,6 +543,22 @@ namespace EF.PoliceMod.Executors
             if (!VehicleEscortInteractGate.EnsureAllowed(GetStyle(), suspect, pullOverBypass))
                 return;
 
+            // Restrained 阶段按 E：自动进入押送，避免“无动作”困惑。
+            if (_stateHub.Is(SuspectState.Restrained))
+            {
+                try
+                {
+                    _isSuspectFollowing = true;
+                    _followingSuspectHandle = suspect.Handle;
+                    MakeSuspectFollow(suspect);
+                }
+                catch { }
+
+                _stateHub.ChangeState(SuspectState.Escorting);
+                Notification.Show("~y~已进入押送，靠近车辆后再按 E 上车");
+                return;
+            }
+
             // 上车：Escorting（步行押送）
             if (_stateHub.Is(SuspectState.Escorting))
             {
@@ -674,6 +690,7 @@ namespace EF.PoliceMod.Executors
 
             // 其他状态不处理
             ModLog.Info("[Escort][Vehicle] E pressed but no action for current suspect state");
+            Notification.Show("~y~当前状态不可上车：请先完成拘捕并进入押送");
         }
         /// <summary>
         /// 处理玩家按 G 的意图（跟随 / 下车）
