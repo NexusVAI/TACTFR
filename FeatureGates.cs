@@ -2,7 +2,7 @@ namespace EF.PoliceMod.Core
 {
     /// <summary>
     /// 功能总开关（保留接口/代码结构，便于后续快速恢复）。
-    /// 当前版本默认关闭双人案件；F7 调度功能已恢复。
+    /// 当前版本按产品要求默认关闭：双人案件、F7 车队调度。
     /// </summary>
     public static class FeatureGates
     {

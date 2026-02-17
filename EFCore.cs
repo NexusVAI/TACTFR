@@ -233,9 +233,12 @@ namespace EF.PoliceMod
             // I 键逼停（嫌疑人驾车逃逸）—— 必须保存实例并在 OnTick 驱动 TickUpdate，否则停稳检测不会更新
             _pullOverSystem = new EF.PoliceMod.Systems.PullOverSystem(_suspectController);
 
-            // F7 调度菜单：仅关闭车队能力，保留路障/钉刺带/直升机勘探
-            _dispatchSupport = new EF.PoliceMod.Systems.DispatchSupportSystem();
-            _dispatchMenu = new EF.PoliceMod.Systems.DispatchMenuController(_dispatchSupport);
+            // F7 调度菜单 / 双嫌疑人：当前版本关闭（保留接口待后续重启）
+            if (EF.PoliceMod.Core.FeatureGates.EnableF7Convoy)
+            {
+                _dispatchSupport = new EF.PoliceMod.Systems.DispatchSupportSystem();
+                _dispatchMenu = new EF.PoliceMod.Systems.DispatchMenuController(_dispatchSupport);
+            }
             _heliRecon = new EF.PoliceMod.Systems.HeliReconSystem();
             if (EF.PoliceMod.Core.FeatureGates.EnableDualSuspectCase)
             {
@@ -421,11 +424,17 @@ namespace EF.PoliceMod
             // PullOver system
             try { _pullOverSystem?.TickUpdate(); } catch (Exception ex) { ModLog.Error("[EFCore] PullOverSystem.TickUpdate exception: " + ex); }
 
-            // Dispatch backup AI（仅车队能力受开关控制）
-            try { _dispatchSupport?.TickUpdate(); } catch (Exception ex) { ModLog.Error("[EFCore] DispatchSupport.TickUpdate exception: " + ex); }
+            // Dispatch backup AI（当前版本关闭）
+            if (EF.PoliceMod.Core.FeatureGates.EnableF7Convoy)
+            {
+                try { _dispatchSupport?.TickUpdate(); } catch (Exception ex) { ModLog.Error("[EFCore] DispatchSupport.TickUpdate exception: " + ex); }
+            }
 
             // Menus
-            try { _dispatchMenu?.Tick(); } catch (Exception ex) { ModLog.Error("[EFCore] DispatchMenu.Tick exception: " + ex); }
+            if (EF.PoliceMod.Core.FeatureGates.EnableF7Convoy)
+            {
+                try { _dispatchMenu?.Tick(); } catch (Exception ex) { ModLog.Error("[EFCore] DispatchMenu.Tick exception: " + ex); }
+            }
             try { _heliRecon?.Tick(); } catch (Exception ex) { ModLog.Error("[EFCore] HeliRecon.Tick exception: " + ex); }
             try { _arrestMenu?.Tick(); } catch (Exception ex) { ModLog.Error("[EFCore] ArrestMenu.Tick exception: " + ex); }
             // 双嫌疑人专项链路（当前版本关闭，保留接口）
@@ -523,7 +532,7 @@ namespace EF.PoliceMod
             if (_patrol is ISystem patrolSystem)
                 root.RegisterSystem(patrolSystem);
 
-            if (_dispatchSupport is ISystem dispatchSystem)
+            if (EF.PoliceMod.Core.FeatureGates.EnableF7Convoy && _dispatchSupport is ISystem dispatchSystem)
                 root.RegisterSystem(dispatchSystem);
 
 
