@@ -233,10 +233,14 @@ namespace EF.PoliceMod
             // I 键逼停（嫌疑人驾车逃逸）—— 必须保存实例并在 OnTick 驱动 TickUpdate，否则停稳检测不会更新
             _pullOverSystem = new EF.PoliceMod.Systems.PullOverSystem(_suspectController);
 
-            // F7 调度菜单
+            // F7 调度菜单：仅关闭车队能力，保留路障/钉刺带/直升机勘探
             _dispatchSupport = new EF.PoliceMod.Systems.DispatchSupportSystem();
-            _dispatchMenu = new EF.PoliceMod.Systems.DispatchMenuController(_dispatchSupport);            _heliRecon = new EF.PoliceMod.Systems.HeliReconSystem();
-            _dualSuspect = new EF.PoliceMod.Systems.DualSuspectCoordinator();
+            _dispatchMenu = new EF.PoliceMod.Systems.DispatchMenuController(_dispatchSupport);
+            _heliRecon = new EF.PoliceMod.Systems.HeliReconSystem();
+            if (EF.PoliceMod.Core.FeatureGates.EnableDualSuspectCase)
+            {
+                _dualSuspect = new EF.PoliceMod.Systems.DualSuspectCoordinator();
+            }
 
 
 
@@ -277,8 +281,8 @@ namespace EF.PoliceMod
             var _initCaseStatusQuery = EF.PoliceMod.Systems.CaseStatusQuery.HasActiveCase;
             var _initTerminalAccessQuery = EF.PoliceMod.Systems.TerminalAccessQuery.CanOpenTerminal;
 
-            GTA.UI.Notification.Show("5.4.0警察模组加载成功！玩家动力@某宇原创制作 最后更新时间2026/02/15 模组QQ反馈群1079691553");
-            ModLog.Info("[EFCore] EF Police Mod v5.4.0 loaded");
+            GTA.UI.Notification.Show("5.3.99-TACTFR警察模组加载成功！玩家动力@某宇原创制作 最后更新时间2026/02/16，祝大家新年快乐~模组QQ反馈群1079691553");
+            ModLog.Info("[EFCore] EF Police Mod v5.3.99 loaded");
             }
             catch (Exception ex)
             {
@@ -417,15 +421,18 @@ namespace EF.PoliceMod
             // PullOver system
             try { _pullOverSystem?.TickUpdate(); } catch (Exception ex) { ModLog.Error("[EFCore] PullOverSystem.TickUpdate exception: " + ex); }
 
-            // Dispatch backup AI
+            // Dispatch backup AI（仅车队能力受开关控制）
             try { _dispatchSupport?.TickUpdate(); } catch (Exception ex) { ModLog.Error("[EFCore] DispatchSupport.TickUpdate exception: " + ex); }
 
             // Menus
             try { _dispatchMenu?.Tick(); } catch (Exception ex) { ModLog.Error("[EFCore] DispatchMenu.Tick exception: " + ex); }
             try { _heliRecon?.Tick(); } catch (Exception ex) { ModLog.Error("[EFCore] HeliRecon.Tick exception: " + ex); }
             try { _arrestMenu?.Tick(); } catch (Exception ex) { ModLog.Error("[EFCore] ArrestMenu.Tick exception: " + ex); }
-            // 双嫌疑人专项链路（阶段A）：只做 2 号嫌疑人丢失/找回维护，不影响主链路
-            try { _dualSuspect?.Tick(); } catch (Exception ex) { ModLog.Error("[EFCore] DualSuspectCoordinator.Tick exception: " + ex); }
+            // 双嫌疑人专项链路（当前版本关闭，保留接口）
+            if (EF.PoliceMod.Core.FeatureGates.EnableDualSuspectCase)
+            {
+                try { _dualSuspect?.Tick(); } catch (Exception ex) { ModLog.Error("[EFCore] DualSuspectCoordinator.Tick exception: " + ex); }
+            }
             // Cuffing sequence
 
             try { _cuffSeq?.Tick(); } catch (Exception ex) { ModLog.Error("[EFCore] CuffingSequence.Tick exception: " + ex); }
@@ -521,7 +528,7 @@ namespace EF.PoliceMod
 
 
             // 双嫌疑人专项链路（阶段A）
-            if (_dualSuspect is ISystem dualSystem)
+            if (EF.PoliceMod.Core.FeatureGates.EnableDualSuspectCase && _dualSuspect is ISystem dualSystem)
                 root.RegisterSystem(dualSystem);
 
 
