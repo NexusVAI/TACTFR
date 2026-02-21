@@ -18,13 +18,13 @@ namespace EF.PoliceMod.Executors
             bool pullOverBypassActive
         )
         {
+            // 逼停旁路优先级最高：只要 I 线激活，直接放行 E 交互，避免与步行拘捕线相互污染。
+            if (pullOverBypassActive) return true;
+
             // 抱头线：允许两种入口
-            // 1) I 逼停旁路激活（免 L+拘捕）
-            // 2) 已 L 锁定到当前嫌疑人（不再强制必须“已拘捕”）
+            // 1) 已 L 锁定到当前嫌疑人（不再强制必须“已拘捕”）
             if (style == ArrestActionStyle.HandsOnHeadFollow)
             {
-                if (pullOverBypassActive) return true;
-
                 try
                 {
                     var core2 = EFCore.Instance;

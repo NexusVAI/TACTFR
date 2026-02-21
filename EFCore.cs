@@ -234,7 +234,7 @@ namespace EF.PoliceMod
             _pullOverSystem = new EF.PoliceMod.Systems.PullOverSystem(_suspectController);
 
             // F7 调度菜单 / 双嫌疑人：当前版本关闭（保留接口待后续重启）
-            if (EF.PoliceMod.Core.FeatureGates.EnableF7Convoy)
+            if (EF.PoliceMod.Core.FeatureGates.EnableF7DispatchMenu)
             {
                 _dispatchSupport = new EF.PoliceMod.Systems.DispatchSupportSystem();
                 _dispatchMenu = new EF.PoliceMod.Systems.DispatchMenuController(_dispatchSupport);
@@ -429,13 +429,13 @@ namespace EF.PoliceMod
             try { _pullOverSystem?.TickUpdate(); } catch (Exception ex) { ModLog.Error("[EFCore] PullOverSystem.TickUpdate exception: " + ex); }
 
             // Dispatch backup AI（当前版本关闭）
-            if (EF.PoliceMod.Core.FeatureGates.EnableF7Convoy)
+            if (EF.PoliceMod.Core.FeatureGates.EnableF7DispatchMenu)
             {
                 try { _dispatchSupport?.TickUpdate(); } catch (Exception ex) { ModLog.Error("[EFCore] DispatchSupport.TickUpdate exception: " + ex); }
             }
 
             // Menus
-            if (EF.PoliceMod.Core.FeatureGates.EnableF7Convoy)
+            if (EF.PoliceMod.Core.FeatureGates.EnableF7DispatchMenu)
             {
                 try { _dispatchMenu?.Tick(); } catch (Exception ex) { ModLog.Error("[EFCore] DispatchMenu.Tick exception: " + ex); }
             }
@@ -536,7 +536,7 @@ namespace EF.PoliceMod
             if (_patrol is ISystem patrolSystem)
                 root.RegisterSystem(patrolSystem);
 
-            if (EF.PoliceMod.Core.FeatureGates.EnableF7Convoy && _dispatchSupport is ISystem dispatchSystem)
+            if (EF.PoliceMod.Core.FeatureGates.EnableF7DispatchMenu && _dispatchSupport is ISystem dispatchSystem)
                 root.RegisterSystem(dispatchSystem);
 
 

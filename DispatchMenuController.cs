@@ -3,7 +3,6 @@ using EF.PoliceMod.Input;
 using GTA;
 using GTA.Native;
 using System;
-using System.Runtime.InteropServices;
 using Keys = System.Windows.Forms.Keys;
 
 namespace EF.PoliceMod.Systems
@@ -27,11 +26,9 @@ namespace EF.PoliceMod.Systems
         private const int ExecuteDebounceMs = 300;
         private readonly string[] _items = new[]
         {
-            "呼叫支援车队",
-            "车队：跟随玩家",
-            "车队：自由行动",
             "部署钉刺带",
             "部署路障",
+            "部署雪糕筒",
             "直升机勘探(嫌疑人丢失后可用)",
         };
 
@@ -41,14 +38,9 @@ namespace EF.PoliceMod.Systems
         private bool _confirmHeld;
         private bool _closeHeld;
 
-        private const int KEY_PRESSED_MASK = 0x8000;
-
-        [DllImport("user32.dll")]
-        private static extern short GetAsyncKeyState(int vKey);
-
         private bool IsRawKeyDown(System.Windows.Forms.Keys k)
         {
-            return (GetAsyncKeyState((int)k) & KEY_PRESSED_MASK) != 0;
+            return Game.IsKeyPressed(k);
         }
 
         public DispatchMenuController(DispatchSupportSystem support)
@@ -169,21 +161,15 @@ namespace EF.PoliceMod.Systems
             switch (_selected)
             {
                 case 0:
-                    _support.TrySpawnBackup();
-                    break;
-                case 1:
-                    _support.SetConvoyFollowPlayer();
-                    break;
-                case 2:
-                    _support.SetConvoyFreeRoam();
-                    break;
-                case 3:
                     _support.TryDeploySpikeStrip();
                     break;
-                case 4:
+                case 1:
                     _support.TryDeployRoadblock();
                     break;
-                case 5:
+                case 2:
+                    _support.TryDeployTrafficCones();
+                    break;
+                case 3:
                     EventBus.Publish(new HeliReconRequestedEvent());
                     break;
             }

@@ -789,5 +789,70 @@ public void TryDeployRoadblock()
         ModLog.Error("[Dispatch] TryDeployRoadblock error: " + ex);
     }
 }
+
+public void TryDeployTrafficCones()
+{
+    if (!CooldownReady()) return;
+
+    try
+    {
+        var player = Game.Player.Character;
+        if (player == null || !player.Exists()) return;
+
+        Vector3 basePos = player.Position;
+        Vector3 forward = player.ForwardVector;
+        float heading = player.Heading;
+
+        try
+        {
+            if (player.IsInVehicle())
+            {
+                var v = player.CurrentVehicle;
+                if (v != null && v.Exists())
+                {
+                    basePos = v.Position;
+                    forward = v.ForwardVector;
+                    heading = v.Heading;
+                }
+            }
+        }
+        catch { }
+
+        Vector3 pos = basePos + forward * 6.0f;
+
+        var model = new Model("prop_roadcone02a");
+        if (!model.IsInCdImage || !model.IsValid)
+        {
+            Notification.Show("~y~雪糕筒模型不可用（prop_roadcone02a）");
+            return;
+        }
+
+        model.Request(500);
+        if (!model.IsLoaded)
+        {
+            Notification.Show("~y~雪糕筒模型加载失败");
+            return;
+        }
+
+        for (int i = -1; i <= 1; i++)
+        {
+            Vector3 side = player.RightVector * (i * 1.8f);
+            var prop = World.CreateProp(model, pos + side, true, false);
+            if (prop != null && prop.Exists())
+            {
+                try { prop.Heading = heading; } catch { }
+                try { Function.Call(Hash.PLACE_OBJECT_ON_GROUND_PROPERLY, prop.Handle); } catch { }
+                try { Function.Call(Hash.FREEZE_ENTITY_POSITION, prop.Handle, true); } catch { }
+            }
+        }
+
+        Notification.Show("~g~已部署雪糕筒");
+        ModLog.Info("[Dispatch] Traffic cones deployed");
+    }
+    catch (Exception ex)
+    {
+        ModLog.Error("[Dispatch] TryDeployTrafficCones error: " + ex);
+    }
+}
     }
 }
