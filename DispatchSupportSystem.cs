@@ -375,37 +375,7 @@ namespace EF.PoliceMod.Systems
                                     Function.Call(Hash.TASK_VEHICLE_FOLLOW, drv.Handle, veh.Handle, player.Handle, FollowMaxSpeed, 786603, 12);
                                 }
 
-                            // 兜底：无论本帧是否重发跟随任务，都检测车辆是否长期低速并强制重规划。
-                            float speed = 0f;
-                            try { speed = veh.Speed; } catch { speed = 0f; }
-                            if (speed >= 1.8f)
-                            {
-                                u.LastMovingAtMs = now;
-                            }
-
-                            // 兜底：无论本帧是否重发跟随任务，都检测车辆是否长期低速并强制重规划。
-                            float speed = 0f;
-                            try { speed = veh.Speed; } catch { speed = 0f; }
-                            if (speed >= 1.8f)
-                            {
-                                u.LastMovingAtMs = now;
-                            }
-
-                            // 兜底：无论本帧是否重发跟随任务，都检测车辆是否长期低速并强制重规划。
-                            float speed = 0f;
-                            try { speed = veh.Speed; } catch { speed = 0f; }
-                            if (speed >= 1.8f)
-                            {
-                                u.LastMovingAtMs = now;
-                            }
-
-                            // 兜底：无论本帧是否重发跟随任务，都检测车辆是否长期低速并强制重规划。
-                            float speed = 0f;
-                            try { speed = veh.Speed; } catch { speed = 0f; }
-                            if (speed >= 1.8f)
-                            {
-                                u.LastMovingAtMs = now;
-                            }
+              
 
                             // 兜底：无论本帧是否重发跟随任务，都检测车辆是否长期低速并强制重规划。
                             float speed = 0f;
