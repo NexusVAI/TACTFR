@@ -203,12 +203,12 @@ namespace EF.PoliceMod.Systems
             bool canClose = (now - _openedAtMs) > 250;
             if (closeDown)
             {
-                if (!_closeHeld && canClose)
+                if (canClose && !_closeHeld)
                 {
-                    _closeHeld = true;
                     Close();
                     return;
                 }
+                _closeHeld = true;
             }
             else
             {
@@ -216,9 +216,9 @@ namespace EF.PoliceMod.Systems
             }
 
             // 上/下/确认：小键盘 8/2/5
-            bool up = IsRawKeyDown(Keys.NumPad8);
-            bool down = IsRawKeyDown(Keys.NumPad2);
-            bool confirm = IsRawKeyDown(Keys.NumPad5);
+            bool up = Game.IsKeyPressed(Keys.NumPad8);
+            bool down = Game.IsKeyPressed(Keys.NumPad2);
+            bool confirm = Game.IsKeyPressed(Keys.NumPad5);
 
             if (up)
             {

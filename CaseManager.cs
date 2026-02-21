@@ -524,6 +524,33 @@ namespace EF.PoliceMod
             return false;
         }
 
+        private void ClearSuspectVisualByHandle(int handle)
+        {
+            if (handle <= 0) return;
+            try
+            {
+                if (_suspect != null && _suspect.Exists() && _suspect.Handle == handle)
+                {
+                    try { if (_suspectBlip != null && _suspectBlip.Exists()) _suspectBlip.Delete(); } catch { }
+                    _suspectBlip = null;
+                    try { ClearSuspectSearchArea(); } catch { }
+                    _suspectLost = false;
+                }
+            }
+            catch { }
+
+            try
+            {
+                if (_suspectHandles != null && _suspectHandles.Count > 1 && _suspectHandles[1] == handle)
+                {
+                    try { if (_secondarySuspectBlip != null && _secondarySuspectBlip.Exists()) _secondarySuspectBlip.Delete(); } catch { }
+                    _secondarySuspectBlip = null;
+                    _secondaryLost = false;
+                }
+            }
+            catch { }
+        }
+
         private void MarkDead(int handle)
         {
             if (handle <= 0) return;
@@ -533,6 +560,7 @@ namespace EF.PoliceMod
                 {
                     if (s == null || s.Handle != handle) continue;
                     s.Status = EF.PoliceMod.Core.CaseSuspectStatus.Dead;
+                    try { ClearSuspectVisualByHandle(handle); } catch { }
                     ModLog.Info($"[CaseManager] MarkDead: handle={handle}");
                     return;
                 }
@@ -673,14 +701,6 @@ namespace EF.PoliceMod
                 }
             }
 
-            // 每次新案重置“已控制/已反抗”状态，避免上一案状态串到新嫌疑人
-            try
-            {
-                var scReset = EFCore.Instance?.GetSuspectController();
-                scReset?.ForceClear();
-            }
-            catch { }
-
             SpawnSuspect(profile);
 
             // 用完即清：必须在 SpawnSuspect 之后，避免本次案件读不到终端预设（双人案件会退化成单人）
@@ -803,18 +823,21 @@ namespace EF.PoliceMod
             ModLog.Info("[CaseManager] SuspectDeadEvent received");
             try { MarkDead(deadHandle); } catch { }
 
-            // 视觉与导航清理（仅针对当前主嫌疑人）
+            // 视觉与导航清理（按死亡 handle 精准处理，避免误操作当前存活主嫌疑人）
             try
             {
-                if (_lastKnownSuspect != null && _lastKnownSuspect.Exists())
+                Ped deadPed = null;
+                try { deadPed = World.GetAllPeds().FirstOrDefault(p => p != null && p.Exists() && p.Handle == deadHandle); } catch { deadPed = null; }
+                if (deadPed != null && deadPed.Exists())
                 {
-                    try { Function.Call(Hash.SET_PED_TO_RAGDOLL, _lastKnownSuspect.Handle, 5000, 5000, 0, false, false, false); } catch { }
-                    try { Function.Call(Hash.FREEZE_ENTITY_POSITION, _lastKnownSuspect.Handle, true); } catch { }
+                    try { Function.Call(Hash.CLEAR_PED_TASKS_IMMEDIATELY, deadPed.Handle); } catch { }
+                    try { Function.Call(Hash.SET_PED_TO_RAGDOLL, deadPed.Handle, 5000, 5000, 0, false, false, false); } catch { }
+                    try { Function.Call(Hash.FREEZE_ENTITY_POSITION, deadPed.Handle, true); } catch { }
                 }
             }
             catch (Exception ex)
             {
-                ModLog.Error("[CaseManager] Error during ragdoll/freeze: " + ex);
+                ModLog.Error("[CaseManager] Error during dead-suspect freeze: " + ex);
             }
 
             try { ClearDeliveryRoute(); } catch (Exception ex) { ModLog.Error("[CaseManager] ClearDeliveryRoute error: " + ex); }
@@ -852,14 +875,24 @@ namespace EF.PoliceMod
             SmsNotification.Show("911调度", "案件结束", "嫌疑人终态已确认，请返回终端手动接收下一案。");
         }
 
+
         private void OnSuspectEscaped(EF.PoliceMod.Core.SuspectEscapedEvent e)
         {
             if (!_isOnDuty || !_caseActive) return;
 
-            int escapedHandle = e.SuspectHandle;
+            int escapedHandle = -1;
+            try { escapedHandle = e.SuspectHandle; } catch { escapedHandle = -1; }
+            if (escapedHandle <= 0)
+            {
+                try { escapedHandle = (_lastKnownSuspect != null && _lastKnownSuspect.Exists()) ? _lastKnownSuspect.Handle : -1; } catch { escapedHandle = -1; }
+            }
+
             if (escapedHandle <= 0 || !IsHandleInCurrentCase(escapedHandle)) return;
 
             try { MarkEscaped(escapedHandle); } catch { }
+
+
+
 
             // 仍有未终态嫌疑人则继续；否则失败结案
             try
@@ -1006,9 +1039,17 @@ namespace EF.PoliceMod
 
             if (optionId >= 10 && optionId <= 15)
             {
-                forceDualSuspects = true;
                 optionId = optionId - 10;
-                ModLog.Info($"[CaseManager] Dual suspect case selected, base optionId={optionId}");
+                if (EF.PoliceMod.Core.FeatureGates.EnableDualSuspectCase)
+                {
+                    forceDualSuspects = true;
+                    ModLog.Info($"[CaseManager] Dual suspect case selected, base optionId={optionId}");
+                }
+                else
+                {
+                    forceDualSuspects = false;
+                    ModLog.Info($"[CaseManager] Dual suspect option received but feature disabled, fallback to single case optionId={optionId}");
+                }
             }
 
             if (optionId < 0 || optionId > 5)
@@ -1020,9 +1061,9 @@ namespace EF.PoliceMod
             _useTerminalPreset = true;
             _terminalOptionId = optionId;
             _terminalStars = Math.Max(1, Math.Min(5, stars));
-            _forceDualSuspects = forceDualSuspects;
+            _forceDualSuspects = EF.PoliceMod.Core.FeatureGates.EnableDualSuspectCase && forceDualSuspects;
 
-            if (forceDualSuspects)
+            if (_forceDualSuspects)
             {
                 _terminalStars = Math.Max(4, _terminalStars);
             }
@@ -1264,20 +1305,64 @@ namespace EF.PoliceMod
             // 以玩家当前位置为种子，避免“接案后嫌疑人刷在几公里外导致看不到模型/立即丢失”
             Vector3 spawnSeed = player.Position;
 
-            // 终端“偏远/郊区/市区”生成距离：把嫌疑人刷远一点，避免太近无聊
+            // 终端“偏远/郊区/市区”生成距离：使用距离带，避免“刷太近”或“开局即超远丢失”。
             float spawnRadius = 220f;
+            float minSpawnDist = 90f;
+            float maxSpawnDist = 360f;
             try
             {
                 int region = (_terminalOptionId >= 0 && _terminalOptionId <= 5) ? (_terminalOptionId % 3) : 0;
-                if (region == 0) spawnRadius = 120f;      // 市区：尽量就近，不要开局就丢失
-                else if (region == 1) spawnRadius = 220f; // 郊区
-                else spawnRadius = 320f;                  // 偏远
+                if (region == 0)
+                {
+                    spawnRadius = 120f;
+                    minSpawnDist = 70f;
+                    maxSpawnDist = 220f;
+                }
+                else if (region == 1)
+                {
+                    spawnRadius = 240f;
+                    minSpawnDist = 180f;
+                    maxSpawnDist = 420f;
+                }
+                else
+                {
+                    spawnRadius = 340f;
+                    minSpawnDist = 260f;
+                    maxSpawnDist = 520f;
+                }
             }
-            catch { spawnRadius = 220f; }
+            catch
+            {
+                spawnRadius = 220f;
+                minSpawnDist = 90f;
+                maxSpawnDist = 360f;
+            }
 
-            Vector3 spawnPos = World.GetNextPositionOnStreet(
-                spawnSeed.Around(spawnRadius)
-            );
+            Vector3 spawnPos = spawnSeed;
+            try
+            {
+                bool picked = false;
+                for (int i = 0; i < 10; i++)
+                {
+                    Vector3 cand = World.GetNextPositionOnStreet(spawnSeed.Around(spawnRadius));
+                    float d = spawnSeed.DistanceTo(cand);
+                    if (d >= minSpawnDist && d <= maxSpawnDist)
+                    {
+                        spawnPos = cand;
+                        picked = true;
+                        break;
+                    }
+                }
+
+                if (!picked)
+                {
+                    spawnPos = World.GetNextPositionOnStreet(spawnSeed.Around(spawnRadius));
+                }
+            }
+            catch
+            {
+                spawnPos = World.GetNextPositionOnStreet(spawnSeed.Around(spawnRadius));
+            }
 
             // 尝试使用玩家通过终端选中的 ped（如果有且有效），否则创建随机 Ped
             if (_forcedSuspectHandle > 0)
@@ -1351,15 +1436,8 @@ namespace EF.PoliceMod
             // 4️⃣ 注册给锁定系统
             EFCore.Instance.LockTargetSystem.RegisterSuspect(_suspect);
 
-            // 双嫌疑人模式下：日志打印主嫌疑人注册后的关键信息。
-            try { ModLog.Info($"[CaseManager] After primary RegisterSuspect: handlesCount={_suspectHandles.Count}, forceDual={_forceDualSuspects}, stars={_terminalStars}, useTerminal={_useTerminalPreset}"); } catch { }
-
-
-
-
-            // ===== 双嫌疑人（阶段A）：按终端星级概率生成第二名嫌疑人 =====
-            // 规则：stars>=4 有概率双人；stars>=5 必定双人；双人案件选项强制双人
-            ModLog.Info($"[CaseManager] Dual suspect check: _useTerminalPreset={_useTerminalPreset}, _terminalStars={_terminalStars}");
+            // 双嫌疑人（阶段A）简化实现：按预设/星级决定是否生成第二嫌疑人
+            ModLog.Info($"[CaseManager] Dual suspect check: _useTerminalPreset={_useTerminalPreset}, _terminalStars={_terminalStars}, _forceDualSuspects={_forceDualSuspects}");
             try
             {
                 _suspectHandles.Clear();
@@ -1367,20 +1445,8 @@ namespace EF.PoliceMod
                 _primarySuspectIndex = 0;
                 RegisterCaseSuspect(_suspect, 0, true);
 
-
-                bool wantTwo = false;
-                // 终端双人模板：强制双人（稳定、可验收）
-                if (_forceDualSuspects)
-                {
-                    wantTwo = true;
-                }
-                // 非双人模板：仍保留“高星概率双人”
-                else if (_useTerminalPreset)
-                {
-                    if (_terminalStars >= 5) wantTwo = true;
-                    else if (_terminalStars >= 4) wantTwo = true; // 原先 50% 改为必出，便于测试/体验
-                }
-
+                // 双人案件开关（默认关闭）：仅当显式启用且终端选择双人模板时才生效。
+                bool wantTwo = EF.PoliceMod.Core.FeatureGates.EnableDualSuspectCase && _forceDualSuspects;
 
                 ModLog.Info($"[CaseManager] Dual suspect: wantTwo={wantTwo}, forceDual={_forceDualSuspects}");
 
@@ -1392,44 +1458,21 @@ namespace EF.PoliceMod
                         try
                         {
                             Vector3 seed = (i == 0) ? spawnPos.Around(12f) : spawnPos.Around(12f + i * 8f);
-                            Vector3 s2PosTry = World.GetNextPositionOnStreet(seed);
-                            s2 = World.CreateRandomPed(s2PosTry);
+                            Vector3 tryPos = World.GetNextPositionOnStreet(seed);
+                            s2 = World.CreateRandomPed(tryPos);
                         }
-                        catch
-                        {
-                            s2 = null;
-                        }
+                        catch { s2 = null; }
                     }
 
                     if (s2 != null && s2.Exists())
                     {
-                        try
-                        {
-                            // 强制把副嫌疑人拉到主嫌疑人附近可见范围，避免“地图有红点但看不到模型”
-                            Vector3 nearPrimary = _suspect.Position.Around(8f);
-                            Vector3 nearRoad = World.GetNextPositionOnStreet(nearPrimary);
-                            if (nearRoad != Vector3.Zero)
-                            {
-                                s2.Position = nearRoad;
-                            }
-                            else
-                            {
-                                s2.Position = _suspect.Position.Around(6f);
-                            }
-                        }
-                        catch { }
-
-                        Vector3 s2Pos = s2.Position;
-                        EntityTracker.Instance.Register(s2, "case_suspect_2", "CaseManager");
-
+                        try { EntityTracker.Instance.Register(s2, "case_suspect_2", "CaseManager"); } catch { }
                         try { ResetSuspectVisualState(s2); } catch { }
                         try { sc?.ApplyProfile(s2, profile); } catch { }
-                        try { s2.IsPersistent = true; } catch { }
-                        try { s2.BlockPermanentEvents = true; } catch { }
 
-                        _suspectHandles.Add(s2.Handle);
-                        RegisterCaseSuspect(s2, 1, false);
-                        _secondaryLastKnownPos = s2Pos;
+                        try { _suspectHandles.Add(s2.Handle); } catch { }
+                        try { RegisterCaseSuspect(s2, 1, false); } catch { }
+                        try { _secondaryLastKnownPos = s2.Position; } catch { }
                         _secondaryLost = false;
 
                         try
@@ -1452,7 +1495,6 @@ namespace EF.PoliceMod
                         ModLog.Warn("[CaseManager] Dual suspect requested but second suspect spawn failed after retries");
                         SmsNotification.Show("911调度", "更新", "~y~双人案件补员失败：已保留主嫌疑人，建议刷新后重试。");
                     }
-
                 }
 
                 try { EventBus.Publish(new EF.PoliceMod.Core.SuspectHandleListChangedEvent(_suspectHandles)); } catch { }
@@ -1465,6 +1507,18 @@ namespace EF.PoliceMod
             // 5️⃣ 基础行为
             _suspect.IsPersistent = true;
             _suspect.BlockPermanentEvents = true;
+
+            // 新案生成保护期：避免刚开局就因距离判定进入 LOST（导致必须立刻直升机勘探）
+            _suspectRecoverAtMs = Game.GameTime + 45000;
+
+            // 新案生成保护期：避免刚开局就因距离判定进入 LOST（导致必须立刻直升机勘探）
+            _suspectRecoverAtMs = Game.GameTime + 45000;
+
+            // 新案生成保护期：避免刚开局就因距离判定进入 LOST（导致必须立刻直升机勘探）
+            _suspectRecoverAtMs = Game.GameTime + 45000;
+
+            // 新案生成保护期：避免刚开局就因距离判定进入 LOST（导致必须立刻直升机勘探）
+            _suspectRecoverAtMs = Game.GameTime + 45000;
 
             // 新案生成保护期：避免刚开局就因距离判定进入 LOST（导致必须立刻直升机勘探）
             _suspectRecoverAtMs = Game.GameTime + 45000;
@@ -1678,6 +1732,13 @@ namespace EF.PoliceMod
                 Ped s2 = null;
                 try { s2 = World.GetAllPeds().FirstOrDefault(p => p != null && p.Exists() && p.Handle == handle2); } catch { s2 = null; }
                 if (s2 == null || !s2.Exists()) return;
+                if (s2.IsDead)
+                {
+                    try { if (_secondarySuspectBlip != null && _secondarySuspectBlip.Exists()) _secondarySuspectBlip.Delete(); } catch { }
+                    _secondarySuspectBlip = null;
+                    _secondaryLost = false;
+                    return;
+                }
 
                 try { _secondaryLastKnownPos = s2.Position; } catch { }
 
@@ -1721,7 +1782,7 @@ namespace EF.PoliceMod
 
                 Ped nextPed = null;
                 try { nextPed = World.GetAllPeds().FirstOrDefault(p => p != null && p.Exists() && p.Handle == nextHandle); } catch { nextPed = null; }
-                if (nextPed == null || !nextPed.Exists()) return false;
+                if (nextPed == null || !nextPed.Exists() || nextPed.IsDead) return false;
 
                 // 提升为 primary
                 _primarySuspectIndex = 1;
@@ -1823,6 +1884,24 @@ namespace EF.PoliceMod
             catch { }
         }
 
+        private void ResetEscortPipelineState(string reason)
+        {
+            try
+            {
+                var hub = EFCore.Instance?.GetSuspectStateHub();
+                if (hub != null && !hub.Is(SuspectState.None))
+                {
+                    hub.ChangeState(SuspectState.None);
+                    ModLog.Info("[CaseManager] Reset suspect state hub to None (" + reason + ")");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLog.Error("[CaseManager] ResetEscortPipelineState(state) error: " + ex);
+            }
+        }
+
+
         private void CleanupCase()
         {
             bool hadActiveCase = _caseActive || _suspect != null || (_suspectHandles != null && _suspectHandles.Count > 0);
@@ -1830,6 +1909,8 @@ namespace EF.PoliceMod
             {
                 EventBus.Publish(new CaseEndedEvent());
             }
+
+            try { ResetEscortPipelineState("CleanupCase"); } catch { }
 
             _caseActive = false;
 

@@ -1,6 +1,7 @@
 using EF.PoliceMod.Core;
 using GTA;
 using GTA.Native;
+using GTA.Math;
 using System;
 
 namespace EF.PoliceMod.Systems

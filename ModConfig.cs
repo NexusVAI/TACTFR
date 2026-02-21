@@ -30,7 +30,7 @@ namespace EF.PoliceMod.Core
         public static Keys LockTarget { get; set; } = Keys.L;
         public static Keys OpenTerminal { get; set; } = Keys.O;
         public static Keys VehicleTerminal { get; set; } = Keys.T;
-        public static Keys PatrolMenu { get; set; } = Keys.J;
+        public static Keys PatrolMenu { get; set; } = Keys.H;
         public static Keys ArrestMenu { get; set; } = Keys.H;
         public static Keys EscortRequest { get; set; } = Keys.G;
         public static Keys VehicleInteract { get; set; } = Keys.E;
@@ -46,7 +46,7 @@ namespace EF.PoliceMod.Core
             { "LockTarget", Keys.L },
             { "OpenTerminal", Keys.O },
             { "VehicleTerminal", Keys.T },
-            { "PatrolMenu", Keys.J },
+            { "PatrolMenu", Keys.H },
             { "ArrestMenu", Keys.H },
             { "EscortRequest", Keys.G },
             { "VehicleInteract", Keys.E },
@@ -63,7 +63,7 @@ namespace EF.PoliceMod.Core
             LockTarget = Keys.L;
             OpenTerminal = Keys.O;
             VehicleTerminal = Keys.T;
-            PatrolMenu = Keys.J;
+            PatrolMenu = Keys.H;
             ArrestMenu = Keys.H;
             EscortRequest = Keys.G;
             VehicleInteract = Keys.E;

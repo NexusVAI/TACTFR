@@ -41,7 +41,8 @@ namespace EF.PoliceMod.Gameplay
                 if (locked != null && locked.Exists()) return locked;
             }
             catch { }
-
+            return null;
+        }
 
         private bool IsCaseTarget(Ped suspect)
         {
@@ -65,9 +66,6 @@ namespace EF.PoliceMod.Gameplay
             catch { }
 
             return false;
-        }
-
-            return null;
         }
 
         private bool IsDeliverReady(Ped player, Ped suspect)
@@ -170,9 +168,6 @@ namespace EF.PoliceMod.Gameplay
         }
 
             // 仅允许交付当前案件嫌疑人，隔离巡逻模式目标
-            if (!IsCaseTarget(target))
-                return false;
-
         public void Shutdown()
         {
         }

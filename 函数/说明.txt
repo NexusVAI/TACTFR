@@ -1,0 +1,38 @@
+GTA5_VEHICLE_Native_Functions.docx	Word文档	横版表格格式，包含函数名、返回类型、哈希值、参数
+GTA5_VEHICLE_Native_Functions.md	Markdown	按字母顺序排列的表格
+GTA5_VEHICLE_Native_Functions_Categorized.md	Markdown	按功能分类组织（23个类别）
+GTA5_VEHICLE_Native_Functions.txt	纯文本	便于快速查找的文本格式
+| 类别                                | 数量  |
+| --------------------------------- | --- |
+| Vehicle Properties (车辆属性)         | 321 |
+| Misc (其他)                         | 119 |
+| Mods/Customization (改装/定制)        | 40  |
+| Cargo/Attachment (货物/挂载)          | 37  |
+| Vehicle Creation/Deletion (创建/删除) | 28  |
+| Plane (飞机)                        | 16  |
+| Helicopter (直升机)                  | 16  |
+| Position/Transform (位置/变换)        | 15  |
+| Wheels/Tires (轮子/轮胎)              | 15  |
+| Speed/Movement (速度/移动)            | 14  |
+| Boat (船只)                         | 13  |
+| Driving/Control (驾驶/控制)           | 12  |
+| Doors (车门)                        | 12  |
+| Damage/Repair (损坏/修复)             | 11  |
+| Lights (灯光)                       | 11  |
+| Player/Seat (玩家/座位)               | 10  |
+| Train (火车)                        | 9   |
+| Mission/Script (任务/脚本)            | 8   |
+| Windows (车窗)                      | 7   |
+| Engine (引擎)                       | 7   |
+| Colors/Paint (颜色/涂装)              | 5   |
+| Cleanup (清理)                      | 5   |
+| Bike/Motorcycle (摩托车)             | 2   |
+| Sound/Audio (声音)                  | 2   |
+
+
+
+每个函数条目包含：
+函数名 - 如 CREATE_VEHICLE, SET_VEHICLE_ENGINE_ON
+返回类型 - 如 Vehicle, void, BOOL, int
+哈希值 - 如 0xAF35D0D2583051B0
+参数列表 - 完整的参数类型和名称

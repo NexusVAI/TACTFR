@@ -50,7 +50,6 @@
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="ScriptHookVDotNet3">
       <HintPath>D:\SteamLibrary\steamapps\common\Grand Theft Auto V Enhanced\ScriptHookVDotNet3.dll</HintPath>
     </Reference>
@@ -72,6 +71,7 @@
     <Compile Include="CaseManager.Extensions.cs" />
     <Compile Include="CaseStatusEvents.cs" />
     <Compile Include="CaseStatusQuery.cs" />
+    <Compile Include="CaseSuspect.cs" />
     <Compile Include="CompositionRoot.cs" />
     <Compile Include="CuffedPoseOps.cs" />
     <Compile Include="CuffedVehicleDoorFlow.cs" />
@@ -91,6 +91,7 @@
     <Compile Include="EFCore.cs" />
     <Compile Include="EntityTracker.cs" />
     <Compile Include="EventBus.cs" />
+    <Compile Include="FeatureGates.cs" />
     <Compile Include="HeliReconRequestedEvent.cs" />
     <Compile Include="HeliReconSystem.cs" />
     <Compile Include="HelpController.cs" />

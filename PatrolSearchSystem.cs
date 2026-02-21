@@ -17,9 +17,9 @@ namespace EF.PoliceMod.Systems
             try
             {
                 if (e.WeaponFound)
-                    SmsNotification.Show("警务终端", "巡逻搜查", "记录：发现武器（巡逻事件，未进入案件链路）。");
+                    SmsNotification.Show("警务终端", "巡逻搜查", "记录：发现武器。");
                 else
-                    SmsNotification.Show("警务终端", "巡逻搜查", "记录：发现违禁品（巡逻事件，未进入案件链路）。");
+                    SmsNotification.Show("警务终端", "巡逻搜查", "记录：发现违禁品。");
             }
             catch { }
         }
