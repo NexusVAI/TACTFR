@@ -1,0 +1,499 @@
+[10:11:57] [INFO] EFCore initialized
+[10:11:57] [INFO] [PoliceTerminalController] Initialized with 2 terminal positions
+[10:11:57] [INFO] [Escort][Vehicle] Executor initialized (StateHub driven)
+[10:11:57] [INFO] [EFCore] Registering systems to CompositionRoot...
+[10:11:57] [INFO] [CompositionRoot] Registered system: DutyLifecycleController
+[10:11:57] [INFO] [CompositionRoot] Registered system: CaseManager
+[10:11:57] [INFO] [CompositionRoot] Registered system: SuspectController
+[10:11:57] [INFO] [CompositionRoot] Registered system: PatrolSystem
+[10:11:57] [INFO] [CompositionRoot] Initializing 4 systems...
+[10:11:57] [INFO] [DutyLifecycleController] Initialized
+[10:11:57] [INFO] [CompositionRoot] Initialized: DutyLifecycleController
+[10:11:57] [INFO] [CaseManager] Initialized
+[10:11:57] [INFO] [CompositionRoot] Initialized: CaseManager
+[10:11:57] [INFO] [SuspectController] Initialized
+[10:11:57] [INFO] [CompositionRoot] Initialized: SuspectController
+[10:11:57] [INFO] [PatrolSystem] Initialized
+[10:11:57] [INFO] [CompositionRoot] Initialized: PatrolSystem
+[10:11:57] [INFO] [CompositionRoot] All systems initialized
+[10:11:57] [INFO] [EFCore] CompositionRoot initialized with 4 systems
+[10:11:57] [INFO] [EFCore] EF Police Mod v5.3.99 loaded
+[10:12:13] [INFO] Event Published: EscortVehicleInteractEvent
+[10:12:13] [WARN] [Escort][Vehicle] E pressed but no current suspect
+[10:12:13] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:12:13] [INFO] [DutyLifecycleController] Saved original model: -1692214353
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Bottle, ammo=0
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: PetrolCan, ammo=4500
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Crowbar, ammo=0
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: SNSPistol, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Parachute, ammo=0
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Minigun, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Molotov, ammo=25
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Hatchet, ammo=0
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: AssaultShotgun, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Pistol, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: HomingLauncher, ammo=10
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Pistol50, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: KnuckleDuster, ammo=0
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Dagger, ammo=0
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Gusenberg, ammo=9899
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: StunGun, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Nightstick, ammo=0
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: MarksmanRifle, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Knife, ammo=0
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: MarksmanPistol, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: CombatPDW, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: CarbineRifle, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: FireExtinguisher, ammo=2000
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: SawnOffShotgun, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: HeavySniper, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: BullpupRifle, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: MachinePistol, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Unarmed, ammo=1
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: CombatMG, ammo=9899
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: SpecialCarbine, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: HeavyPistol, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: MG, ammo=9899
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: GrenadeLauncher, ammo=20
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: VintagePistol, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Musket, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Bat, ammo=0
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: HeavyShotgun, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: SMG, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: CombatPistol, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Machete, ammo=0
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: RPG, ammo=20
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: MicroSMG, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: AdvancedRifle, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Grenade, ammo=25
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Hammer, ammo=0
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: SmokeGrenade, ammo=25
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: AssaultRifle, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: PumpShotgun, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: APPistol, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: GolfClub, ammo=0
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: ProximityMine, ammo=5
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: StickyBomb, ammo=25
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Firework, ammo=20
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: Railgun, ammo=20
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: 966099553, ammo=0
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: BullpupShotgun, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Saved weapon: SniperRifle, ammo=9999
+[10:12:13] [INFO] [DutyLifecycleController] Player set to police faction
+[10:12:13] [INFO] Event Published: DutyStartedEvent
+[10:12:13] [INFO] Event Published: TerminalAccessChangedEvent
+[10:12:13] [INFO] [CaseManager] StartDuty -> on duty. Waiting for terminal acceptance.
+[10:12:13] [INFO] DutyStarted
+[10:12:13] [INFO] [DutyLifecycleController] Duty started
+[10:12:13] [INFO] [PoliceTerminal] Top-left prompt shown (enter range)
+[10:12:24] [INFO] Event Published: OpenPoliceTerminalEvent
+[10:12:24] [INFO] [PoliceTerminal] Received OpenPoliceTerminalEvent
+[10:12:24] [INFO] [PoliceTerminal] Opened - clearing help text/sound
+[10:12:24] [INFO] [Input] OpenPoliceTerminalEvent published, source=StationTerminal
+[10:12:29] [INFO] [TerminalUI] Confirm case: index=2, optionId=2, stars=4, team=Single
+[10:12:29] [INFO] Event Published: TerminalCaseSelectedEvent
+[10:12:29] [INFO] [CaseManager] Terminal preset applied: optionId=2, stars=4, forceDual=False
+[10:12:29] [INFO] Event Published: TerminalAccessChangedEvent
+[10:12:29] [INFO] [CaseManager] Publishing CaseStatusChangedEvent: active=True, lost=False, suspectHandle=-1
+[10:12:29] [INFO] Event Published: CaseStatusChangedEvent
+[10:12:29] [INFO] [CaseStatusQuery] Received: active=True, lost=False, handle=-1
+[10:12:29] [INFO] [CaseManager] SpawnSuspect enter: useTerminal=True, optionId=2, stars=4, forceDual=False
+[10:12:29] [INFO] [CaseManager] SpawnSuspect - CreatedRandomPed -> handle=9986
+[10:12:29] [INFO] [EntityTracker] Registered: handle=9986, type=Ped, tag=case_suspect, source=CaseManager
+[10:12:29] [INFO] [CaseManager] SpawnSuspect -> profile: Personality=Violent, HasFirearm=False, ResistChance=0.6
+[10:12:29] [INFO] [SuspectController] ApplyProfile -> ped=9986, Personality=Violent, HasFirearm=False, ResistChance=0.6
+[10:12:29] [INFO] [CaseManager] Dual suspect check: _useTerminalPreset=True, _terminalStars=4, _forceDualSuspects=True
+[10:12:29] [INFO] [CaseManager] Dual suspect: wantTwo=False, forceDual=True
+[10:12:29] [INFO] Event Published: SuspectHandleListChangedEvent
+[10:12:29] [WARN] No listeners for event: SuspectHandleListChangedEvent
+[10:12:29] [INFO] [PoliceTerminal] Closed - restoring player control
+[10:12:30] [INFO] Event Published: EscortVehicleInteractEvent
+[10:12:30] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:12:30] [INFO] Event Published: LockTargetClearRequestedEvent
+[10:12:30] [INFO] [LockTargetSystem] Cleared by LockTargetClearRequestedEvent
+[10:12:30] [INFO] [DutyLifecycleController] Player removed from police faction
+[10:12:30] [INFO] Event Published: DutyEndedEvent
+[10:12:30] [INFO] Event Published: CaseEndedEvent
+[10:12:30] [INFO] [Escort][Vehicle] Case ended - reset follow state
+[10:12:30] [INFO] [CaseManager] Publishing CaseStatusChangedEvent: active=False, lost=False, suspectHandle=9986
+[10:12:30] [INFO] Event Published: CaseStatusChangedEvent
+[10:12:30] [INFO] [CaseStatusQuery] Received: active=False, lost=False, handle=9986
+[10:12:30] [INFO] DutyEnded
+[10:12:30] [INFO] [DutyLifecycleController] Duty ended
+[10:12:35] [INFO] Event Published: EscortVehicleInteractEvent
+[10:12:35] [WARN] [Escort][Vehicle] E pressed but no current suspect
+[10:12:35] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:12:35] [INFO] Event Published: EscortVehicleInteractEvent
+[10:12:35] [WARN] [Escort][Vehicle] E pressed but no current suspect
+[10:12:35] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:12:36] [INFO] Event Published: EscortVehicleInteractEvent
+[10:12:36] [WARN] [Escort][Vehicle] E pressed but no current suspect
+[10:12:36] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:12:37] [INFO] Event Published: EscortVehicleInteractEvent
+[10:12:37] [WARN] [Escort][Vehicle] E pressed but no current suspect
+[10:12:37] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:12:46] [INFO] [Input] T pressed: onDuty=False, inVehicle=True, allow=False
+[10:12:47] [INFO] [Input] T pressed: onDuty=False, inVehicle=True, allow=False
+[10:12:48] [INFO] Event Published: EscortVehicleInteractEvent
+[10:12:48] [WARN] [Escort][Vehicle] E pressed but no current suspect
+[10:12:48] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:12:48] [INFO] Event Published: EscortVehicleInteractEvent
+[10:12:48] [WARN] [Escort][Vehicle] E pressed but no current suspect
+[10:12:48] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:12:58] [INFO] Event Published: EscortVehicleInteractEvent
+[10:12:58] [WARN] [Escort][Vehicle] E pressed but no current suspect
+[10:12:58] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:12:58] [INFO] [DutyLifecycleController] Saved original model: -1692214353
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Bottle, ammo=0
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: PetrolCan, ammo=4500
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Crowbar, ammo=0
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: SNSPistol, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Parachute, ammo=0
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Minigun, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Molotov, ammo=25
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Hatchet, ammo=0
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: AssaultShotgun, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Pistol, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: HomingLauncher, ammo=10
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Pistol50, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: KnuckleDuster, ammo=0
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Dagger, ammo=0
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Gusenberg, ammo=9899
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: StunGun, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Nightstick, ammo=0
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: MarksmanRifle, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Knife, ammo=0
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: MarksmanPistol, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: CombatPDW, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: CarbineRifle, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: FireExtinguisher, ammo=2000
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: SawnOffShotgun, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: HeavySniper, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: BullpupRifle, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: MachinePistol, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Unarmed, ammo=1
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: CombatMG, ammo=9899
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: SpecialCarbine, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: HeavyPistol, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: MG, ammo=9899
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: GrenadeLauncher, ammo=20
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: VintagePistol, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Musket, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Bat, ammo=0
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: HeavyShotgun, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: SMG, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: CombatPistol, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Machete, ammo=0
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: RPG, ammo=20
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: MicroSMG, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: AdvancedRifle, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Grenade, ammo=25
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Hammer, ammo=0
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: SmokeGrenade, ammo=25
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: AssaultRifle, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: PumpShotgun, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: APPistol, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: GolfClub, ammo=0
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: ProximityMine, ammo=5
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: StickyBomb, ammo=25
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Firework, ammo=20
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: Railgun, ammo=20
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: 966099553, ammo=0
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: BullpupShotgun, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Saved weapon: SniperRifle, ammo=9999
+[10:12:58] [INFO] [DutyLifecycleController] Player set to police faction
+[10:12:58] [INFO] Event Published: DutyStartedEvent
+[10:12:58] [INFO] Event Published: TerminalAccessChangedEvent
+[10:12:58] [INFO] [CaseManager] Publishing CaseStatusChangedEvent: active=False, lost=False, suspectHandle=-1
+[10:12:58] [INFO] Event Published: CaseStatusChangedEvent
+[10:12:58] [INFO] [CaseStatusQuery] Received: active=False, lost=False, handle=-1
+[10:12:58] [INFO] [CaseManager] StartDuty -> on duty. Waiting for terminal acceptance.
+[10:12:58] [INFO] DutyStarted
+[10:12:58] [INFO] [DutyLifecycleController] Duty started
+[10:12:58] [INFO] [PoliceTerminal] Top-left prompt shown (enter range)
+[10:13:01] [INFO] Event Published: EscortVehicleInteractEvent
+[10:13:01] [WARN] [Escort][Vehicle] E pressed but no current suspect
+[10:13:01] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:13:02] [INFO] Event Published: EscortVehicleInteractEvent
+[10:13:02] [WARN] [Escort][Vehicle] E pressed but no current suspect
+[10:13:02] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:13:03] [INFO] Event Published: EscortVehicleInteractEvent
+[10:13:03] [WARN] [Escort][Vehicle] E pressed but no current suspect
+[10:13:03] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:13:07] [INFO] [Input] T pressed: onDuty=True, inVehicle=True, allow=True
+[10:13:07] [INFO] Event Published: OpenPoliceTerminalEvent
+[10:13:07] [INFO] [PoliceTerminal] Received OpenPoliceTerminalEvent
+[10:13:07] [INFO] [PoliceTerminal] Opened - clearing help text/sound
+[10:13:07] [INFO] [Input] OpenPoliceTerminalEvent published, source=VehicleTerminal
+[10:13:08] [INFO] Event Published: TogglePatrolModeEvent
+[10:13:08] [INFO] Event Published: PatrolModeToggledEvent
+[10:13:08] [INFO] [PoliceTerminal] Closed - restoring player control
+[10:13:10] [INFO] [Input] T pressed: onDuty=True, inVehicle=True, allow=True
+[10:13:10] [INFO] Event Published: OpenPoliceTerminalEvent
+[10:13:10] [INFO] [PoliceTerminal] Received OpenPoliceTerminalEvent
+[10:13:10] [INFO] [PoliceTerminal] Opened - clearing help text/sound
+[10:13:10] [INFO] [Input] OpenPoliceTerminalEvent published, source=VehicleTerminal
+[10:13:12] [INFO] [TerminalUI] Confirm case: index=2, optionId=2, stars=3, team=Single
+[10:13:12] [INFO] Event Published: TerminalCaseSelectedEvent
+[10:13:12] [INFO] [CaseManager] Terminal preset applied: optionId=2, stars=3, forceDual=False
+[10:13:12] [INFO] Event Published: TerminalAccessChangedEvent
+[10:13:12] [INFO] [CaseManager] Publishing CaseStatusChangedEvent: active=True, lost=False, suspectHandle=-1
+[10:13:12] [INFO] Event Published: CaseStatusChangedEvent
+[10:13:12] [INFO] [CaseStatusQuery] Received: active=True, lost=False, handle=-1
+[10:13:12] [INFO] [CaseManager] SpawnSuspect enter: useTerminal=True, optionId=2, stars=3, forceDual=False
+[10:13:12] [INFO] [CaseManager] SpawnSuspect - CreatedRandomPed -> handle=21762
+[10:13:12] [INFO] [EntityTracker] Registered: handle=21762, type=Ped, tag=case_suspect, source=CaseManager
+[10:13:12] [INFO] [CaseManager] SpawnSuspect -> profile: Personality=Violent, HasFirearm=False, ResistChance=0.6
+[10:13:12] [INFO] [SuspectController] ApplyProfile -> ped=21762, Personality=Violent, HasFirearm=False, ResistChance=0.6
+[10:13:12] [INFO] [CaseManager] Dual suspect check: _useTerminalPreset=True, _terminalStars=3, _forceDualSuspects=False
+[10:13:12] [INFO] [CaseManager] Dual suspect: wantTwo=False, forceDual=False
+[10:13:12] [INFO] Event Published: SuspectHandleListChangedEvent
+[10:13:12] [WARN] No listeners for event: SuspectHandleListChangedEvent
+[10:13:12] [INFO] [PoliceTerminal] Closed - restoring player control
+[10:13:15] [INFO] Event Published: EscortVehicleInteractEvent
+[10:13:15] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:13:21] [INFO] Event Published: LockTargetEvent
+[10:13:57] [INFO] [Input] Player is aiming (target-query disabled)
+[10:13:57] [INFO] [Input] Player is aiming (target-query disabled)
+[10:13:57] [INFO] Event Published: LockTargetEvent
+[10:13:57] [INFO] [LockTargetSystem] Locked target handle=21762 allowAny=True slot=0
+[10:13:57] [INFO] [Input] Player is aiming (target-query disabled)
+[10:13:57] [INFO] [Input] Player is aiming (target-query disabled)
+[10:13:58] [INFO] [Input] Player is aiming (target-query disabled)
+[10:13:58] [INFO] [Input] Player is aiming (target-query disabled)
+[10:13:58] [INFO] [Input] Player is aiming (target-query disabled)
+[10:13:58] [INFO] Event Published: OpenArrestActionMenuEvent
+[10:13:58] [INFO] [Input] Player is aiming (target-query disabled)
+[10:13:59] [INFO] Event Published: AttemptArrestEvent
+[10:13:59] [INFO] [SuspectController] TryAttemptArrest: ped=21762, canResist=True, roll=0.720, escapeDisabled=True
+[10:13:59] [INFO] Event Published: SuspectArrestedEvent
+[10:13:59] [INFO] [Escort][Vehicle] StateChanged: None -> Restrained
+[10:13:59] [INFO] [EFCore] Event -> State: SuspectArrestedEvent -> Restrained
+[10:13:59] [INFO] Event Published: CuffingSequenceRequestedEvent
+[10:13:59] [INFO] [CuffSeq] Start (suspect=21762)
+[10:14:01] [INFO] [CuffSeq] Done
+[10:14:06] [INFO] Event Published: EscortVehicleInteractEvent
+[10:14:06] [INFO] [Escort] StartFollow issued (handle=21762)
+[10:14:06] [INFO] [SuspectOnFootExecutor] Unmarked busy for ped=21762 (from Restrained)
+[10:14:06] [INFO] [SuspectOnFootExecutor] Suspect 21762 FollowToOffset issued.
+[10:14:06] [INFO] [Escort][Vehicle] StateChanged: Restrained -> Escorting
+[10:14:06] [INFO] [Escort][Vehicle] Execute: ResumeEscortOnFoot
+[10:14:06] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:14:11] [INFO] [SuspectOnFootExecutor] Unmarked busy for ped=21762 (from Escorting)
+[10:14:11] [INFO] [Escort][Vehicle] StateChanged: Escorting -> EnteringVehicle
+[10:14:12] [INFO] [SuspectOnFootExecutor] Unmarked busy for ped=21762 (from EnteringVehicle)
+[10:14:12] [INFO] [Escort][Vehicle] StateChanged: EnteringVehicle -> InVehicle
+[10:14:12] [INFO] Event Published: SuspectBoardedVehicleEvent
+[10:14:12] [INFO] [CaseManager] Delivery route set (suspect=21762)
+[10:14:22] [INFO] Event Published: OpenOfficerSquadMenuEvent
+[10:14:52] [INFO] [SuspectOnFootExecutor] Unmarked busy for ped=21762 (from InVehicle)
+[10:14:52] [INFO] [Escort][Vehicle] StateChanged: InVehicle -> ExitingVehicle
+[10:14:53] [INFO] [SuspectOnFootExecutor] Unmarked busy for ped=21762 (from ExitingVehicle)
+[10:14:53] [INFO] [SuspectOnFootExecutor] Suspect 21762 FollowToOffset issued.
+[10:14:53] [INFO] [Escort][Vehicle] StateChanged: ExitingVehicle -> Escorting
+[10:14:53] [INFO] [Escort][Vehicle] Execute: ResumeEscortOnFoot
+[10:14:53] [INFO] [Escort][Vehicle] Suspect exited vehicle - cleared boarded record (handle=21762)
+[10:15:16] [INFO] Event Published: EscortVehicleInteractEvent
+[10:15:16] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:15:17] [INFO] Event Published: SuspectFollowRequestEvent
+[10:15:17] [INFO] Event Published: SuspectEscortBeginEvent
+[10:15:17] [INFO] [EFCore] Event -> State: SuspectEscortBeginEvent -> Escorting
+[10:15:17] [INFO] [Escort] StartFollow issued (handle=21762)
+[10:15:17] [INFO] [Escort][Follow] Suspect set to follow (handle=21762)
+[10:15:19] [INFO] Event Published: SuspectFollowRequestEvent
+[10:15:19] [INFO] Event Published: SuspectEscortBeginEvent
+[10:15:19] [INFO] [EFCore] Event -> State: SuspectEscortBeginEvent -> Escorting
+[10:15:19] [INFO] [Escort] StopFollow issued (handle=21762)
+[10:15:19] [INFO] [Escort][Follow] Suspect follow cancelled (handle=21762)
+[10:15:20] [INFO] Event Published: SuspectFollowRequestEvent
+[10:15:20] [INFO] Event Published: SuspectEscortBeginEvent
+[10:15:20] [INFO] [EFCore] Event -> State: SuspectEscortBeginEvent -> Escorting
+[10:15:20] [INFO] [Escort] StartFollow issued (handle=21762)
+[10:15:20] [INFO] [Escort][Follow] Suspect set to follow (handle=21762)
+[10:15:21] [INFO] Event Published: OpenArrestActionMenuEvent
+[10:15:23] [INFO] Event Published: AttemptArrestEvent
+[10:15:24] [INFO] Event Published: DeliverRequestedEvent
+[10:15:24] [INFO] Event Published: SuspectDeliveredEvent
+[10:15:24] [INFO] [CaseManager] MarkDelivered: handle=21762, delivered=1/1
+[10:15:24] [INFO] [CaseManager] Publishing CaseStatusChangedEvent: active=False, lost=False, suspectHandle=21762
+[10:15:24] [INFO] Event Published: CaseStatusChangedEvent
+[10:15:24] [INFO] [CaseStatusQuery] Received: active=False, lost=False, handle=21762
+[10:15:24] [INFO] Event Published: CaseEndedEvent
+[10:15:24] [INFO] [Escort][Vehicle] Case ended - reset follow state
+[10:15:24] [INFO] [Escort][Vehicle] StateChanged: Escorting -> None
+[10:15:24] [INFO] [CaseManager] Reset suspect state hub to None (CleanupCase)
+[10:15:24] [INFO] Event Published: TerminalAccessChangedEvent
+[10:15:24] [INFO] [CaseManager] Publishing CaseStatusChangedEvent: active=False, lost=False, suspectHandle=-1
+[10:15:24] [INFO] Event Published: CaseStatusChangedEvent
+[10:15:24] [INFO] [CaseStatusQuery] Received: active=False, lost=False, handle=-1
+[10:15:24] [INFO] [CaseManager] All suspects delivered -> awaiting manual terminal acceptance for next case
+[10:15:24] [INFO] [Input] Z pressed -> DeliverRequestedEvent
+[10:15:36] [INFO] [Input] T pressed: onDuty=True, inVehicle=True, allow=True
+[10:15:36] [INFO] Event Published: OpenPoliceTerminalEvent
+[10:15:36] [INFO] [PoliceTerminal] Received OpenPoliceTerminalEvent
+[10:15:36] [INFO] [PoliceTerminal] Opened - clearing help text/sound
+[10:15:36] [INFO] [Input] OpenPoliceTerminalEvent published, source=VehicleTerminal
+[10:15:39] [INFO] [TerminalUI] Confirm case: index=3, optionId=3, stars=4, team=Single
+[10:15:39] [INFO] Event Published: TerminalCaseSelectedEvent
+[10:15:39] [INFO] [CaseManager] Terminal preset applied: optionId=3, stars=4, forceDual=False
+[10:15:39] [INFO] Event Published: TerminalAccessChangedEvent
+[10:15:39] [INFO] [CaseManager] Publishing CaseStatusChangedEvent: active=True, lost=False, suspectHandle=-1
+[10:15:39] [INFO] Event Published: CaseStatusChangedEvent
+[10:15:39] [INFO] [CaseStatusQuery] Received: active=True, lost=False, handle=-1
+[10:15:39] [INFO] [CaseManager] SpawnSuspect enter: useTerminal=True, optionId=3, stars=4, forceDual=False
+[10:15:39] [INFO] [CaseManager] SpawnSuspect - CreatedRandomPed -> handle=205314
+[10:15:39] [INFO] [EntityTracker] Registered: handle=205314, type=Ped, tag=case_suspect, source=CaseManager
+[10:15:39] [INFO] [CaseManager] SpawnSuspect -> profile: Personality=Violent, HasFirearm=False, ResistChance=0.6
+[10:15:39] [INFO] [SuspectController] ApplyProfile -> ped=205314, Personality=Violent, HasFirearm=False, ResistChance=0.6
+[10:15:39] [INFO] [CaseManager] Dual suspect check: _useTerminalPreset=True, _terminalStars=4, _forceDualSuspects=True
+[10:15:39] [INFO] [CaseManager] Dual suspect: wantTwo=False, forceDual=True
+[10:15:39] [INFO] Event Published: SuspectHandleListChangedEvent
+[10:15:39] [WARN] No listeners for event: SuspectHandleListChangedEvent
+[10:15:39] [INFO] [CaseManager] VehicleFlee case: suspect=205314 veh=205570
+[10:15:39] [INFO] [PoliceTerminal] Closed - restoring player control
+[10:15:58] [INFO] [Input] I pressed (pull over)
+[10:15:59] [INFO] [Input] Player is aiming (target-query disabled)
+[10:15:59] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:00] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:00] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:00] [INFO] [Input] I pressed (pull over)
+[10:16:00] [INFO] [Input] PullOverRequestedEvent published
+[10:16:00] [INFO] Event Published: PullOverRequestedEvent
+[10:16:00] [INFO] [PullOver] BRING_VEHICLE_TO_HALT issued driver=205314 veh=205570 pos=X:434.5 Y:-544.75 Z:27.75
+[10:16:00] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:00] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:00] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:01] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:01] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:01] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:01] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:01] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:03] [INFO] [PullOver] Auto-exit issued (after delay)
+[10:16:04] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:05] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:06] [INFO] Event Published: PullOverEscortBypassActivatedEvent
+[10:16:06] [INFO] [Escort][Vehicle] PullOver bypass activated: suspect=205314 ttlMs=90000
+[10:16:06] [INFO] [LockTargetSystem] AutoLockAndArrest handle=205314
+[10:16:06] [INFO] [PullOver] Driver exited -> hands up (infinite) -> auto locked+arrested (driver=205314)
+[10:16:09] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:10] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:10] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:10] [INFO] Event Published: OpenArrestActionMenuEvent
+[10:16:10] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:10] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:10] [INFO] [Input] Player is aiming (target-query disabled)
+[10:16:14] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:14] [INFO] [Escort][Vehicle] E pressed but no action for current suspect state
+[10:16:14] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:17] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:17] [INFO] [Escort][Vehicle] E pressed but no action for current suspect state
+[10:16:17] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:19] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:19] [INFO] [Escort][Vehicle] E pressed but no action for current suspect state
+[10:16:19] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:20] [INFO] Event Published: SuspectFollowRequestEvent
+[10:16:20] [INFO] Event Published: SuspectEscortBeginEvent
+[10:16:20] [INFO] [SuspectOnFootExecutor] Suspect 205314 FollowToOffset issued.
+[10:16:20] [INFO] [Escort][Vehicle] StateChanged: None -> Escorting
+[10:16:20] [INFO] [Escort][Vehicle] Execute: ResumeEscortOnFoot
+[10:16:20] [INFO] [EFCore] Event -> State: SuspectEscortBeginEvent -> Escorting
+[10:16:20] [INFO] [Escort] StartFollow issued (handle=205314)
+[10:16:20] [INFO] [Escort][Follow] Suspect set to follow (handle=205314)
+[10:16:22] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:22] [INFO] [Escort][Vehicle] E pressed but player not in vehicle
+[10:16:22] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:26] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:26] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:26] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:27] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:27] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:27] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:28] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:28] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:28] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:28] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:28] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:28] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:28] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:28] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:28] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:28] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:28] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:28] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:29] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:29] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:29] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:29] [INFO] Event Published: SuspectFollowRequestEvent
+[10:16:29] [INFO] Event Published: SuspectEscortBeginEvent
+[10:16:29] [INFO] [EFCore] Event -> State: SuspectEscortBeginEvent -> Escorting
+[10:16:29] [INFO] [Escort] StopFollow issued (handle=205314)
+[10:16:29] [INFO] [Escort][Follow] Suspect follow cancelled (handle=205314)
+[10:16:30] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:30] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:30] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:30] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:30] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:30] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:30] [INFO] Event Published: SuspectFollowRequestEvent
+[10:16:30] [INFO] Event Published: SuspectEscortBeginEvent
+[10:16:30] [INFO] [EFCore] Event -> State: SuspectEscortBeginEvent -> Escorting
+[10:16:30] [INFO] [Escort] StartFollow issued (handle=205314)
+[10:16:30] [INFO] [Escort][Follow] Suspect set to follow (handle=205314)
+[10:16:31] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:31] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:31] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:31] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:31] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:31] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:31] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:31] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:31] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:31] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:31] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:31] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:32] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:32] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:32] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:32] [INFO] Event Published: SuspectFollowRequestEvent
+[10:16:32] [INFO] Event Published: SuspectEscortBeginEvent
+[10:16:32] [INFO] [EFCore] Event -> State: SuspectEscortBeginEvent -> Escorting
+[10:16:32] [INFO] [Escort] StopFollow issued (handle=205314)
+[10:16:32] [INFO] [Escort][Follow] Suspect follow cancelled (handle=205314)
+[10:16:32] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:32] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:32] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:32] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:32] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:32] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:33] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:33] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:33] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:33] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:33] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:33] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:34] [INFO] Event Published: SuspectFollowRequestEvent
+[10:16:34] [INFO] Event Published: SuspectEscortBeginEvent
+[10:16:34] [INFO] [EFCore] Event -> State: SuspectEscortBeginEvent -> Escorting
+[10:16:34] [INFO] [Escort] StartFollow issued (handle=205314)
+[10:16:34] [INFO] [Escort][Follow] Suspect set to follow (handle=205314)
+[10:16:35] [INFO] Event Published: SuspectFollowRequestEvent
+[10:16:35] [INFO] Event Published: SuspectEscortBeginEvent
+[10:16:35] [INFO] [EFCore] Event -> State: SuspectEscortBeginEvent -> Escorting
+[10:16:35] [INFO] [Escort] StopFollow issued (handle=205314)
+[10:16:35] [INFO] [Escort][Follow] Suspect follow cancelled (handle=205314)
+[10:16:35] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:35] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:35] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:36] [INFO] Event Published: SuspectFollowRequestEvent
+[10:16:36] [INFO] Event Published: SuspectEscortBeginEvent
+[10:16:36] [INFO] [EFCore] Event -> State: SuspectEscortBeginEvent -> Escorting
+[10:16:36] [INFO] [Escort] StartFollow issued (handle=205314)
+[10:16:36] [INFO] [Escort][Follow] Suspect set to follow (handle=205314)
+[10:16:36] [INFO] Event Published: EscortVehicleInteractEvent
+[10:16:36] [INFO] [Escort][Vehicle] E pressed but suspect too far
+[10:16:36] [INFO] [Input] E pressed → EscortVehicleInteractEvent
+[10:16:37] [INFO] Event Published: SuspectFollowRequestEvent
+[10:16:37] [INFO] Event Published: SuspectEscortBeginEvent
+[10:16:37] [INFO] [EFCore] Event -> State: SuspectEscortBeginEvent -> Escorting
+[10:16:37] [INFO] [Escort] StopFollow issued (handle=205314)
+[10:16:37] [INFO] [Escort][Follow] Suspect follow cancelled (handle=205314)
