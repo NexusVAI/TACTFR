@@ -5,7 +5,6 @@ using GTA.Native;
 using GTA.UI;
 using System;
 using Keys = System.Windows.Forms.Keys;
-using System.Runtime.InteropServices;
 
 namespace EF.PoliceMod.Input
 {
@@ -37,16 +36,13 @@ namespace EF.PoliceMod.Input
     private bool _wasAiming = false;
     private int _lastAimedHandle = 0;
     private const int AIM_PUBLISH_MIN_INTERVAL_MS = 200;
-    private const int KEY_PRESSED_MASK = 0x8000;
-        [DllImport("user32.dll")]
-        private static extern short GetAsyncKeyState(int vKey);
 
         private DateTime _lastTerminalToggle = DateTime.MinValue;
         private readonly TimeSpan _terminalDebounce = TimeSpan.FromMilliseconds(220);
 
         private bool IsRawKeyDown(System.Windows.Forms.Keys k)
         {
-            return (GetAsyncKeyState((int)k) & KEY_PRESSED_MASK) != 0;
+            return Game.IsKeyPressed(k);
         }
 
     // === 删除上面多余的全局 PlayerAimedAtPedEvent 定义 ===
@@ -248,9 +244,9 @@ namespace EF.PoliceMod.Input
                 {
                     _dispatchMenuHeld = true;
 
-                    if (!EF.PoliceMod.Core.FeatureGates.EnableF7Convoy)
+                    if (!EF.PoliceMod.Core.FeatureGates.EnableF7DispatchMenu)
                     {
-                        Notification.Show("~y~当前版本已暂时关闭 F7 车队功能");
+                        Notification.Show("~y~当前版本已暂时关闭 F7 调度菜单");
                     }
                     else
                     {
@@ -377,36 +373,6 @@ namespace EF.PoliceMod.Input
             }
 
 
-
-            // F7：车队调度功能当前版本屏蔽（保留接口便于后续恢复）
-            if (IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.DispatchMenu))
-            {
-                if (!_dispatchMenuHeld)
-                {
-                    _dispatchMenuHeld = true;
-
-                    if (!EF.PoliceMod.Core.FeatureGates.EnableF7Convoy)
-                    {
-                        Notification.Show("~y~当前版本已暂时关闭 F7 车队功能");
-                    }
-                    else
-                    {
-                        bool onDuty = false;
-                        try { onDuty = EF.PoliceMod.Systems.DutyQuery.IsOnDuty; } catch { onDuty = false; }
-                        if (!onDuty)
-                        {
-                            Notification.Show("~y~请先开始执勤");
-                            return;
-                        }
-
-                        EventBus.Publish(new Open911MenuEvent());
-                    }
-                }
-            }
-            else
-            {
-                _dispatchMenuHeld = false;
-            }
 
             // F8：警员小队控制菜单（仅执勤后可用）
             if (Game.IsKeyPressed(EF.PoliceMod.Core.KeyBindings.OfficerSquadMenu))

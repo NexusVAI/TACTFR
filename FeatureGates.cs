@@ -8,5 +8,6 @@ namespace EF.PoliceMod.Core
     {
         public const bool EnableDualSuspectCase = false;
         public const bool EnableF7Convoy = false;
+        public const bool EnableF7DispatchMenu = true;
     }
 }
