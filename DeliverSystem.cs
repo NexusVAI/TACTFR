@@ -4,6 +4,7 @@ using GTA.Math;
 using GTA.Native;
 using GTA.UI;
 using System;
+using System.Linq;
 
 
 namespace EF.PoliceMod.Gameplay
@@ -18,13 +19,54 @@ namespace EF.PoliceMod.Gameplay
         private const float DeliverRadius = 18.0f;
         private Ped GetDeliverTarget()
         {
+            // Step3：案件链路优先（主嫌疑人），避免巡逻/非案件锁定目标误交付
+            try
+            {
+                var cm = EFCore.Instance?.GetCaseManager();
+                if (cm != null && cm.HasActiveCase)
+                {
+                    int activeHandle = cm.CurrentSuspectHandle;
+                    if (activeHandle > 0)
+                    {
+                        var ped = World.GetAllPeds().FirstOrDefault(x => x != null && x.Exists() && x.Handle == activeHandle);
+                        if (ped != null && ped.Exists()) return ped;
+                    }
+                }
+            }
+            catch { }
+
             try
             {
                 Ped locked = _lockTargetSystem != null ? _lockTargetSystem.CurrentTarget : null;
                 if (locked != null && locked.Exists()) return locked;
             }
             catch { }
-
+
+
+        private bool IsCaseTarget(Ped suspect)
+        {
+            if (suspect == null || !suspect.Exists()) return false;
+            try
+            {
+                var cm = EFCore.Instance?.GetCaseManager();
+                if (cm == null || !cm.HasActiveCase) return false;
+
+                if (cm.CurrentSuspectHandle == suspect.Handle) return true;
+
+                var handles = cm.SuspectHandles;
+                if (handles != null)
+                {
+                    foreach (var h in handles)
+                    {
+                        if (h == suspect.Handle) return true;
+                    }
+                }
+            }
+            catch { }
+
+            return false;
+        }
+
             return null;
         }
 
@@ -126,6 +168,10 @@ namespace EF.PoliceMod.Gameplay
         {
             // 这里暂时不靠事件，走 Tick 检测（更稳定）
         }
+
+            // 仅允许交付当前案件嫌疑人，隔离巡逻模式目标
+            if (!IsCaseTarget(target))
+                return false;
 
         public void Shutdown()
         {

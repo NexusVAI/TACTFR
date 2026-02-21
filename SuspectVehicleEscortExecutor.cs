@@ -462,7 +462,15 @@ namespace EF.PoliceMod.Executors
             // 上车：Escorting（步行押送）
             if (_stateHub.Is(SuspectState.Escorting))
             {
-                if (_requireFollowBeforeBoard)
+                bool requireFollow = _requireFollowBeforeBoard;
+                try
+                {
+                    if (GetStyle() == ArrestActionStyle.HandsOnHeadFollow)
+                        requireFollow = false;
+                }
+                catch { }
+
+                if (requireFollow)
                 {
                     if (!_isSuspectFollowing || _followingSuspectHandle != suspect.Handle)
                     {
@@ -818,17 +826,6 @@ namespace EF.PoliceMod.Executors
 
                     // 在确认下车后清理 boarded 去重（保证下次上车能正确触发）
                     OnSuspectExitVehicle();
-
-                    // 下车后关门（best-effort；避免 TickUpdate 未驱动时残留开门）
-                    try
-                    {
-                        _cuffedDoorFlow.TryShutDoorAfterExit(
-                            GetStyle(),
-                            (h) => World.GetAllVehicles().FirstOrDefault(x => x != null && x.Exists() && x.Handle == h),
-                            (v, d) => NormalizeDoorIndex(v, d)
-                        );
-                    }
-                    catch { }
 
                     // 下车后关门（best-effort；避免 TickUpdate 未驱动时残留开门）
                     try

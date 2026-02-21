@@ -70,8 +70,10 @@ namespace EF.PoliceMod.Input
             bool pressedT = IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.VehicleTerminal);
 
 
-            // 巡逻指令菜单（巡逻模式开启时才允许打开）
-            if (IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.PatrolMenu))
+            // 巡逻指令菜单（J 打开）：巡逻模式开启 + 已锁定目标 + 当前不在案件链路，才允许打开。
+            // 说明：巡逻链路与案件链路分离；案件进行中时 H 保留给拘捕菜单。
+            bool patrolMenuHotkey = IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.PatrolMenu);
+            if (patrolMenuHotkey)
             {
                 if (!_yHeldRaw)
                 {
@@ -79,10 +81,14 @@ namespace EF.PoliceMod.Input
                     try
                     {
                         bool patrolOn = EF.PoliceMod.Systems.PatrolModeQuery.Enabled;
-                        if (patrolOn)
+                        bool hasActiveCase = EF.PoliceMod.Systems.CaseStatusQuery.HasActiveCase;
+                        var core = EFCore.Instance;
+                        bool hasLockedTarget = core != null && core.LockTargetSystem != null && core.LockTargetSystem.HasTarget;
+
+                        if (patrolOn && hasLockedTarget && !hasActiveCase)
                         {
                             EventBus.Publish(new EF.PoliceMod.Core.PatrolMenuToggledEvent(true));
-                            ModLog.Info("[Input] Y pressed -> PatrolMenu opened");
+                            ModLog.Info("[Input] J pressed -> PatrolMenu opened");
                         }
                     }
                     catch { }
@@ -197,9 +203,16 @@ namespace EF.PoliceMod.Input
                 var core = EFCore.Instance;
                 bool hasLockedTarget = core != null && core.LockTargetSystem != null && core.LockTargetSystem.HasTarget;
 
-                // H 菜单：必须先锁定嫌疑人（L）才能呼出。
+                bool patrolOn = EF.PoliceMod.Systems.PatrolModeQuery.Enabled;
+                bool hasActiveCase = EF.PoliceMod.Systems.CaseStatusQuery.HasActiveCase;
+
+                // H 菜单（案件链路）：仅当不在巡逻模式，或当前存在案件时，才走拘捕菜单。
                 // 用 RawKey 做边沿检测：避免换模型后 Game.IsKeyPressed(H) 偶发失灵。
-                if (IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.ArrestMenu) && hasLockedTarget)
+                bool openArrestMenu = IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.ArrestMenu)
+                    && hasLockedTarget
+                    && (!patrolOn || hasActiveCase);
+
+                if (openArrestMenu)
                 {
                     if (!_hHeldRaw)
                     {
@@ -309,7 +322,7 @@ namespace EF.PoliceMod.Input
 
 
             // F7：调度菜单（仅执勤后可用）
-            if (Game.IsKeyPressed(EF.PoliceMod.Core.KeyBindings.DispatchMenu))
+            if (IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.DispatchMenu))
             {
                 if (!_dispatchMenuHeld)
                 {

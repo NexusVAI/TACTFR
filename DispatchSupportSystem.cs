@@ -15,9 +15,12 @@ namespace EF.PoliceMod.Systems
         private int _lastActionAtMs = 0;
         private const int CooldownMs = 1200;
 
-        private const int FollowUpdateDebounceMs = 400;
+        private const int FollowUpdateDebounceMs = 1600;
         private int _lastFollowUpdateAtMs = 0;
+        private const float FollowMaxSpeed = 58.0f;
         private bool _initialized = false;
+        private int _lastFollowModeAtMs = 0;
+        private const int FollowModeDebounceMs = 900;
 
         private enum ConvoyMode
         {
@@ -230,6 +233,11 @@ namespace EF.PoliceMod.Systems
 
         public void SetConvoyFollowPlayer()
         {
+            int now = Game.GameTime;
+            if (_convoyMode == ConvoyMode.FollowPlayer && (now - _lastFollowModeAtMs) < FollowModeDebounceMs)
+                return;
+
+            _lastFollowModeAtMs = now;
             _convoyMode = ConvoyMode.FollowPlayer;
             _lastFollowUpdateAtMs = 0;
             foreach (var u in _backupUnits) u.IsFollowing = false;
@@ -266,7 +274,10 @@ namespace EF.PoliceMod.Systems
 
                 CleanupInvalidUnits();
                 CheckPlayerAttackBackup(player);
-                CheckPlayerUnderAttack(player);
+                if (_convoyMode == ConvoyMode.FreeRoam)
+                {
+                    CheckPlayerUnderAttack(player);
+                }
 
                 int now = Game.GameTime;
 
@@ -295,28 +306,37 @@ namespace EF.PoliceMod.Systems
                             if (now - _lastFollowUpdateAtMs >= FollowUpdateDebounceMs)
                                 _lastFollowUpdateAtMs = now;
 
-                            try { drv.Task.ClearAll(); } catch { }
+                            try { if (drv.IsInVehicle(veh)) drv.Task.ClearSecondary(); } catch { }
                             u.IsFollowing = true;
-                            ModLog.Info($"[Dispatch] Follow refresh: drv={drv.Handle}, veh={veh.Handle}");
 
-                            if (pv != null && pv.Exists())
+                            Vector3 dest = player.Position;
+                            try
                             {
-                                // 任务跟随玩家车辆
-                                // 更激进的驾驶参数，避免“只打方向不走”
-                                Function.Call(Hash.TASK_VEHICLE_FOLLOW, drv.Handle, veh.Handle, pv.Handle, 28.0f, 786603, 8);
+                                if (pv != null && pv.Exists())
+                                {
+                                    var forward = pv.ForwardVector;
+                                    dest = pv.Position - (forward * 18.0f);
+                                }
                             }
+                            catch { dest = player.Position; }
 
-
-                            else
+                            try
                             {
-                                // 鐜╁寰掓锛氳溅杈嗗紑鍒扮帺瀹惰韩鍚?                                Vector3 dest = player.Position - player.ForwardVector * 12f;
-                                Function.Call(Hash.TASK_VEHICLE_DRIVE_TO_COORD, drv.Handle, veh.Handle, dest.X, dest.Y, dest.Z, 28.0f, 0, veh.Model.Hash, 786603, -1.0f, 1.0f);
+                                Function.Call(Hash.TASK_VEHICLE_DRIVE_TO_COORD, drv.Handle, veh.Handle, dest.X, dest.Y, dest.Z, FollowMaxSpeed, 0, veh.Model.Hash, 786603, 7.0f, 5.0f);
+                            }
+                            catch
+                            {
+                                try
+                                {
+                                    Function.Call(Hash.TASK_VEHICLE_FOLLOW, drv.Handle, veh.Handle, pv?.Handle ?? player.Handle, FollowMaxSpeed, 786603, 8);
+                                }
+                                catch { }
                             }
 
                             // 鍏滃簳锛氭湁鏃?AI 浼?鎵撴柟鍚戠洏浣嗕笉韪╂补闂?锛岃繖閲屽己鍒舵澗鍒硅溅/鍚姩寮曟搸骞剁粰涓€鐐瑰墠杩涢€熷害鎻愮ず
                             try { Function.Call(Hash.SET_VEHICLE_ENGINE_ON, veh.Handle, true, true, false); } catch { }
                             try { Function.Call(Hash.SET_VEHICLE_BRAKE_LIGHTS, veh.Handle, false); } catch { }
-                            try { Function.Call(Hash.SET_VEHICLE_FORWARD_SPEED, veh.Handle, 6.5f); } catch { }
+                            // 不再强推前进速度，避免 AI 在转向时出现“刹车+倒挡”抖动
                             try { Function.Call(Hash.SET_VEHICLE_OUT_OF_CONTROL, veh.Handle, false, false); } catch { }
                             try { Function.Call(Hash.SET_VEHICLE_REDUCE_GRIP, veh.Handle, false); } catch { }
                             try { Function.Call(Hash.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS, veh.Handle, false); } catch { }

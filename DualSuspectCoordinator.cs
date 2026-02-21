@@ -23,8 +23,8 @@ namespace EF.PoliceMod.Systems
         private bool _secondaryLost = false;
         private int _secondaryRecoverAtMs = 0;
 
-        private const float LostIfFartherThan = 520f;
-        private const float RecoverIfCloserThan = 220f;
+        private const float LostIfFartherThan = 1400f;
+        private const float RecoverIfCloserThan = 420f;
 
         public void Initialize()
         {

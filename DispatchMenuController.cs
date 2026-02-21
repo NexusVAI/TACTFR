@@ -23,6 +23,8 @@ namespace EF.PoliceMod.Systems
         private int _openedAtMs = 0;
 
         private int _selected = 0;
+        private int _lastExecuteAtMs = 0;
+        private const int ExecuteDebounceMs = 300;
         private readonly string[] _items = new[]
         {
             "呼叫支援车队",
@@ -160,6 +162,10 @@ namespace EF.PoliceMod.Systems
 
         private void ExecuteSelected()
         {
+            int now = Game.GameTime;
+            if (now - _lastExecuteAtMs < ExecuteDebounceMs) return;
+            _lastExecuteAtMs = now;
+
             switch (_selected)
             {
                 case 0:
@@ -195,16 +201,24 @@ namespace EF.PoliceMod.Systems
             // 用原始按键状态：在某些 UI/控制接管情况下，Game.IsKeyPressed 可能检测不到
             bool closeDown = IsRawKeyDown(Keys.F7) || IsRawKeyDown(Keys.Back);
             bool canClose = (now - _openedAtMs) > 250;
-            if (closeDown && canClose)
+            if (closeDown)
             {
-                Close();
-                return;
+                if (!_closeHeld && canClose)
+                {
+                    _closeHeld = true;
+                    Close();
+                    return;
+                }
+            }
+            else
+            {
+                _closeHeld = false;
             }
 
             // 上/下/确认：小键盘 8/2/5
-            bool up = Game.IsKeyPressed(Keys.NumPad8);
-            bool down = Game.IsKeyPressed(Keys.NumPad2);
-            bool confirm = Game.IsKeyPressed(Keys.NumPad5);
+            bool up = IsRawKeyDown(Keys.NumPad8);
+            bool down = IsRawKeyDown(Keys.NumPad2);
+            bool confirm = IsRawKeyDown(Keys.NumPad5);
 
             if (up)
             {

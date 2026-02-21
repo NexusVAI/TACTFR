@@ -169,6 +169,10 @@ namespace EF.PoliceMod.Systems
                 var player = Game.Player.Character;
                 if (player == null || !player.Exists()) return;
 
+                bool playerControlLocked = false;
+                bool playerFrozen = false;
+                bool targetFrozen = false;
+
                 Function.Call(Hash.REQUEST_ANIM_DICT, "missfbi5ig_22");
                 Function.Call(Hash.REQUEST_ANIM_DICT, "random@arrests");
 
@@ -183,6 +187,10 @@ namespace EF.PoliceMod.Systems
                 {
                     try
                     {
+                        try { Function.Call(Hash.SET_PLAYER_CONTROL, Game.Player.Handle, false, 0); playerControlLocked = true; } catch { }
+                        try { Function.Call(Hash.FREEZE_ENTITY_POSITION, player.Handle, true); playerFrozen = true; } catch { }
+                        try { if (target != null && target.Exists()) { Function.Call(Hash.FREEZE_ENTITY_POSITION, target.Handle, true); targetFrozen = true; } } catch { }
+
                         player.Task.ClearAll();
                         player.Task.PlayAnimation("missfbi5ig_22", "fbi_5ig_22_pistol_whip_ped", 8.0f, -1, AnimationFlags.StayInEndFrame);
                     }
@@ -207,6 +215,10 @@ namespace EF.PoliceMod.Systems
                     player.Task.ClearAll();
                 }
                 catch { }
+
+                try { if (targetFrozen && target != null && target.Exists()) Function.Call(Hash.FREEZE_ENTITY_POSITION, target.Handle, false); } catch { }
+                try { if (playerFrozen) Function.Call(Hash.FREEZE_ENTITY_POSITION, player.Handle, false); } catch { }
+                try { if (playerControlLocked) Function.Call(Hash.SET_PLAYER_CONTROL, Game.Player.Handle, true, 0); } catch { }
 
                 ModLog.Info("[PatrolSystem] Search animation played");
             }

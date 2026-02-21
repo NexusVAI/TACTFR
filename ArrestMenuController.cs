@@ -1,7 +1,7 @@
 using EF.PoliceMod.Core;
 using EF.PoliceMod.Input;
 using GTA;
-using GTA.Native;
+using GTA.UI;
 using System;
 using Keys = System.Windows.Forms.Keys;
 
@@ -47,8 +47,6 @@ namespace EF.PoliceMod.Systems
             _open = true;
             UIState.MarkArrestMenuOpen(Game.GameTime);
             _selected = 0;
-
-            try { Function.Call(Hash.CLEAR_HELP, true); } catch { }
         }
 
         private void Close()
@@ -64,62 +62,10 @@ namespace EF.PoliceMod.Systems
 
         private void DrawMenu()
         {
-            // 右上角（放在调度菜单下方一点）
-            float panelW = 0.30f;
-            float rowH = 0.032f;
-            float headerH = 0.038f;
-            float panelH = headerH + (_items.Length * rowH) + 0.01f;
-            float panelX = 0.83f;
-            float panelY = 0.32f;
-
-            try { Function.Call(Hash.DRAW_RECT, panelX, panelY, panelW, panelH, 0, 0, 0, 190); } catch { }
-
-            // 标题
-            try
-            {
-                Function.Call(Hash.SET_TEXT_FONT, 0);
-                Function.Call(Hash.SET_TEXT_SCALE, 0.34f, 0.34f);
-                Function.Call(Hash.SET_TEXT_CENTRE, true);
-                Function.Call(Hash.SET_TEXT_COLOUR, 255, 220, 80, 255);
-                Function.Call(Hash.BEGIN_TEXT_COMMAND_DISPLAY_TEXT, "STRING");
-                Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME, "拘捕动作");
-                Function.Call(Hash.END_TEXT_COMMAND_DISPLAY_TEXT, panelX, panelY - panelH / 2 + 0.01f);
-            }
-            catch { }
-
-            for (int i = 0; i < _items.Length; i++)
-            {
-                float rowY = (panelY - panelH / 2 + headerH) + (i * rowH) + (rowH / 2);
-
-                if (i == _selected)
-                {
-                    try { Function.Call(Hash.DRAW_RECT, panelX, rowY, panelW - 0.01f, rowH, 255, 255, 255, 35); } catch { }
-                }
-
-                try
-                {
-                    Function.Call(Hash.SET_TEXT_FONT, 0);
-                    Function.Call(Hash.SET_TEXT_SCALE, 0.31f, 0.31f);
-                    Function.Call(Hash.SET_TEXT_CENTRE, false);
-                    Function.Call(Hash.SET_TEXT_COLOUR, 255, 255, 255, 255);
-                    Function.Call(Hash.BEGIN_TEXT_COMMAND_DISPLAY_TEXT, "STRING");
-                    Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME, (i == _selected ? "> " : "  ") + _items[i]);
-                    Function.Call(Hash.END_TEXT_COMMAND_DISPLAY_TEXT, panelX - panelW / 2 + 0.01f, rowY - 0.012f);
-                }
-                catch { }
-            }
-
-            try
-            {
-                Function.Call(Hash.SET_TEXT_FONT, 0);
-                Function.Call(Hash.SET_TEXT_SCALE, 0.26f, 0.26f);
-                Function.Call(Hash.SET_TEXT_CENTRE, true);
-                Function.Call(Hash.SET_TEXT_COLOUR, 200, 200, 200, 255);
-                Function.Call(Hash.BEGIN_TEXT_COMMAND_DISPLAY_TEXT, "STRING");
-                Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME, "小键盘8/2选择 5确认  Back取消");
-                Function.Call(Hash.END_TEXT_COMMAND_DISPLAY_TEXT, panelX, panelY + panelH / 2 - 0.025f);
-            }
-            catch { }
+            // 兼容版 UI：不依赖 Native Hash，避免与本地自定义 Hash 枚举冲突导致编译失败。
+            string line1 = (_selected == 0 ? "> " : "  ") + _items[0];
+            string line2 = (_selected == 1 ? "> " : "  ") + _items[1];
+            Screen.ShowSubtitle("~b~拘捕动作~s~\n" + line1 + "\n" + line2 + "\n~c~小键盘8/2选择 5确认  Back取消", 1);
         }
 
         private void ExecuteSelected()

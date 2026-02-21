@@ -295,9 +295,9 @@ namespace EF.PoliceMod.Gameplay
             _currentSuspect = null;
 
             CurrentArrestStyle = EF.PoliceMod.Core.ArrestActionStyle.CuffAndLead;
-         
-   
-           
+            IsCompliant = false;
+            IsResisting = false;
+            _wasShotByPlayer = false;
             _deathEventFired = false;
         }
 

@@ -9,6 +9,8 @@ namespace EF.PoliceMod.Systems
     {
         private int _lastHandledDeadAtMs = -999999;
         private const int DeadHandleDebounceMs = 2500;
+        private int _firstDeadAtMs = -1;
+        private const int ForceRespawnAfterMs = 6000;
         private bool _wasDead = false;
 
         public PlayerRespawnFixSystem()
@@ -28,6 +30,7 @@ namespace EF.PoliceMod.Systems
                     if (!_wasDead)
                     {
                         _wasDead = true;
+                        _firstDeadAtMs = Game.GameTime;
                         ModLog.Info("[PlayerRespawnFixSystem] Player death detected");
                     }
 
@@ -42,20 +45,29 @@ namespace EF.PoliceMod.Systems
                     // 兜底：黑屏卡圈常见是 screen fade / death camera 卡死
                     try { Function.Call(Hash.DO_SCREEN_FADE_IN, 0); } catch { }
                     try { Function.Call(Hash.CLEAR_FOCUS); } catch { }
-                    // 强制复活兜底：部分模型切换后会卡死在死亡镜头，game 不会自动 respawn
-                    try
+                    int deadForMs = (_firstDeadAtMs > 0) ? (now - _firstDeadAtMs) : 0;
+                    if (deadForMs >= ForceRespawnAfterMs)
                     {
-                        // RESURRECT_PED + CLEAR_PED_TASKS：best-effort（不会影响正常死亡流程，且有节流）
-                        Function.Call(Hash.RESURRECT_PED, p.Handle);
-                        Function.Call(Hash.CLEAR_PED_TASKS_IMMEDIATELY, p.Handle);
-                        Function.Call(Hash.SET_ENTITY_HEALTH, p.Handle, 200);
-                        Function.Call(Hash.SET_PED_TO_RAGDOLL, p.Handle, 0, 0, 0, false, false, false);
+                        try
+                        {
+                            Vector3 pos = p.Position;
+                            Function.Call(Hash.NETWORK_RESURRECT_LOCAL_PLAYER, pos.X, pos.Y, pos.Z, p.Heading, true, false);
+                        }
+                        catch { }
+
+                        try { Function.Call(Hash.RESURRECT_PED, p.Handle); } catch { }
+                        try { Function.Call(Hash.CLEAR_PED_TASKS_IMMEDIATELY, p.Handle); } catch { }
+                        try { Function.Call(Hash.CLEAR_PED_BLOOD_DAMAGE, p.Handle); } catch { }
+                        try { Function.Call(Hash.RESET_PED_VISIBLE_DAMAGE, p.Handle); } catch { }
+                        try { Function.Call(Hash.SET_ENTITY_INVINCIBLE, p.Handle, false); } catch { }
+                        try { Function.Call(Hash.SET_ENTITY_HEALTH, p.Handle, 200); } catch { }
+                        try { Function.Call(Hash.DO_SCREEN_FADE_IN, 300); } catch { }
                     }
-                    catch { }
                 }
                 else if (_wasDead)
                 {
                     _wasDead = false;
+                    _firstDeadAtMs = -1;
                     ModLog.Info("[PlayerRespawnFixSystem] Player respawned, restoring state");
                     OnPlayerRespawned();
                 }

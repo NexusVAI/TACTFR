@@ -119,8 +119,6 @@ namespace EF.PoliceMod
                 DisableLawAuthority();
             });
 
-            EventBus.Subscribe<DutyStartedEvent>(_ => _caseManager.StartDuty());
-            EventBus.Subscribe<DutyEndedEvent>(e => _caseManager.OnDutyEnded(e));
             _wantedRegistry = new EF.PoliceMod.Data.WantedRegistry();
             _terminalController = new EF.PoliceMod.Systems.PoliceTerminalController(_wantedRegistry);
             _helpController = new EF.PoliceMod.Core.HelpController();
@@ -254,6 +252,10 @@ namespace EF.PoliceMod
             _officerSquad = new EF.PoliceMod.Systems.OfficerSquadSystem(_suspectController, LockTargetSystem);
             _officerSquadMenu = new EF.PoliceMod.Systems.OfficerSquadMenuController(_officerSquad);
             _squadHud = new EF.PoliceMod.Systems.SquadStatusHud(_officerSquad);
+            EventBus.Subscribe<OfficerSquadSummonRequestedEvent>(_ =>
+            {
+                try { _officerSquad?.SummonIfNeeded(2); } catch { }
+            });
 
             _arrestSuppression = new EF.PoliceMod.Systems.ArrestSuppressionSystem(_officerSquad, _suspectController, LockTargetSystem);
             _patrol = new EF.PoliceMod.Systems.PatrolSystem(LockTargetSystem);
@@ -279,7 +281,7 @@ namespace EF.PoliceMod
             var _initCaseStatusQuery = EF.PoliceMod.Systems.CaseStatusQuery.HasActiveCase;
             var _initTerminalAccessQuery = EF.PoliceMod.Systems.TerminalAccessQuery.CanOpenTerminal;
 
-            GTA.UI.Notification.Show("5.4.0警察模组加载成功！玩家动力@某宇原创制作 最后更新时间2026/02/12 模组QQ反馈群1079691553");
+            GTA.UI.Notification.Show("5.4.0警察模组加载成功！玩家动力@某宇原创制作 最后更新时间2026/02/15 模组QQ反馈群1079691553");
             ModLog.Info("[EFCore] EF Police Mod v5.4.0 loaded");
             }
             catch (Exception ex)
@@ -367,11 +369,8 @@ namespace EF.PoliceMod
         {
             Ped player = Game.Player.Character;
 
-            // ★ 新增：玩家死亡直接结束案件
-            if (player != null && player.Exists() && player.IsDead)
-            {
-                EventBus.Publish(new DutyEndedEvent());
-            }
+            // 玩家死亡时由 DutyLifecycleController / PlayerRespawnFixSystem 处理，
+            // 这里不要每帧广播 DutyEndedEvent，避免事件风暴。
 
             if (_lawAuthorityActive)
             {

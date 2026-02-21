@@ -9,7 +9,7 @@ using Keys = System.Windows.Forms.Keys;
 namespace EF.PoliceMod.Systems
 {
     /// <summary>
-    /// 巡逻模式命令菜单（Y 打开）：小键盘 8/2 选择，5 确认，Back 关闭
+    /// 巡逻模式命令菜单（J 打开）：小键盘 8/2 选择，5 确认，J/Num0 关闭
     /// </summary>
     public sealed class PatrolMenuController
     {
@@ -88,7 +88,7 @@ namespace EF.PoliceMod.Systems
                 Function.Call(Hash.SET_TEXT_CENTRE, true);
                 Function.Call(Hash.SET_TEXT_COLOUR, 120, 200, 255, 255);
                 Function.Call(Hash.BEGIN_TEXT_COMMAND_DISPLAY_TEXT, "STRING");
-                Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME, "巡逻指令(Y)");
+                Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME, "巡逻指令(J)");
                 Function.Call(Hash.END_TEXT_COMMAND_DISPLAY_TEXT, panelX, panelY - panelH / 2 + 0.01f);
             }
             catch { }
@@ -121,7 +121,7 @@ namespace EF.PoliceMod.Systems
                 Function.Call(Hash.SET_TEXT_CENTRE, true);
                 Function.Call(Hash.SET_TEXT_COLOUR, 200, 200, 200, 255);
                 Function.Call(Hash.BEGIN_TEXT_COMMAND_DISPLAY_TEXT, "STRING");
-                Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME, "小键盘8/2选择 5确认  Back关闭");
+                Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME, "小键盘8/2选择 5确认  J/Num0关闭");
                 Function.Call(Hash.END_TEXT_COMMAND_DISPLAY_TEXT, panelX, panelY + panelH / 2 - 0.025f);
             }
             catch { }
@@ -132,7 +132,9 @@ namespace EF.PoliceMod.Systems
             int now = Game.GameTime;
             bool canClose = (now - _openedAtMs) > 250;
 
-            bool cancel = IsRawKeyDown(Keys.Back);
+            bool cancel = IsRawKeyDown(Keys.NumPad0)
+                || IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.PatrolMenu)
+                || IsRawKeyDown(Keys.Back);
             if (cancel && canClose)
             {
                 if (!_cancelHeld)
