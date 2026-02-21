@@ -46,6 +46,8 @@ namespace EF.PoliceMod.Executors
                 _pendingShutDoorVehicleHandle = 0;
                 _pendingShutDoorIndex = -1;
                 _pendingShutDoorAtMs = 0;
+                _pendingShutDoorSuspectHandle = -1;
+                _pendingShutDoorExpireAtMs = 0;
             }
         }
 

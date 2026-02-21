@@ -18,9 +18,33 @@ namespace EF.PoliceMod.Executors
             bool pullOverBypassActive
         )
         {
-            // 抱头线：只有在 I 逼停旁路激活时，才允许跳过 L+拘捕
-            if (style == ArrestActionStyle.HandsOnHeadFollow && pullOverBypassActive)
-                return true;
+            // 抱头线：允许两种入口
+            // 1) I 逼停旁路激活（免 L+拘捕）
+            // 2) 已 L 锁定到当前嫌疑人（不再强制必须“已拘捕”）
+            if (style == ArrestActionStyle.HandsOnHeadFollow)
+            {
+                if (pullOverBypassActive) return true;
+
+                try
+                {
+                    var core2 = EFCore.Instance;
+                    var lts2 = core2 != null ? core2.LockTargetSystem : null;
+                    if (lts2 != null
+                        && lts2.HasTarget
+                        && lts2.CurrentTarget != null
+                        && lts2.CurrentTarget.Exists()
+                        && suspect != null
+                        && suspect.Exists()
+                        && lts2.CurrentTarget.Handle == suspect.Handle)
+                    {
+                        return true;
+                    }
+                }
+                catch { }
+
+                Notification.Show("~y~需要先锁定当前嫌疑人（L）或先执行 I 逼停");
+                return false;
+            }
 
             // 其它情况：统一强制要求 L 锁定 + 已拘捕
             try

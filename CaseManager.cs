@@ -1520,6 +1520,9 @@ namespace EF.PoliceMod
             // 新案生成保护期：避免刚开局就因距离判定进入 LOST（导致必须立刻直升机勘探）
             _suspectRecoverAtMs = Game.GameTime + 45000;
 
+            // 新案生成保护期：避免刚开局就因距离判定进入 LOST（导致必须立刻直升机勘探）
+            _suspectRecoverAtMs = Game.GameTime + 45000;
+
             Vehicle caseVehicle = null;
 
             if (_caseMode == CaseMode.VehicleFlee)

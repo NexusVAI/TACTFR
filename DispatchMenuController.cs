@@ -23,6 +23,8 @@ namespace EF.PoliceMod.Systems
         private int _openedAtMs = 0;
 
         private int _selected = 0;
+        private int _lastExecuteAtMs = 0;
+        private const int ExecuteDebounceMs = 300;
         private readonly string[] _items = new[]
         {
             "呼叫支援车队",
@@ -160,6 +162,10 @@ namespace EF.PoliceMod.Systems
 
         private void ExecuteSelected()
         {
+            int now = Game.GameTime;
+            if (now - _lastExecuteAtMs < ExecuteDebounceMs) return;
+            _lastExecuteAtMs = now;
+
             switch (_selected)
             {
                 case 0:

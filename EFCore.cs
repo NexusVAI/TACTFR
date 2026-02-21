@@ -259,6 +259,10 @@ namespace EF.PoliceMod
             _officerSquad = new EF.PoliceMod.Systems.OfficerSquadSystem(_suspectController, LockTargetSystem);
             _officerSquadMenu = new EF.PoliceMod.Systems.OfficerSquadMenuController(_officerSquad);
             _squadHud = new EF.PoliceMod.Systems.SquadStatusHud(_officerSquad);
+            EventBus.Subscribe<OfficerSquadSummonRequestedEvent>(_ =>
+            {
+                try { _officerSquad?.SummonIfNeeded(2); } catch { }
+            });
 
             _arrestSuppression = new EF.PoliceMod.Systems.ArrestSuppressionSystem(_officerSquad, _suspectController, LockTargetSystem);
             _patrol = new EF.PoliceMod.Systems.PatrolSystem(LockTargetSystem);
