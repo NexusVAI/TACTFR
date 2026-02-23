@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using GTA;
+using GTA.UI;
 
 namespace EF.PoliceMod.Core
 {
@@ -10,6 +11,35 @@ namespace EF.PoliceMod.Core
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TACTFR.log");
 
         public static bool Enabled = true;
+        private static bool _initialized = false;
+        private static bool _writeFailed = false;
+
+        public static void Initialize()
+        {
+            if (_initialized) return;
+            _initialized = true;
+
+            try
+            {
+                var dir = Path.GetDirectoryName(LogPath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+
+                File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss}] [INFO] TACTFR Log Initialized\n");
+                _writeFailed = false;
+            }
+            catch (Exception ex)
+            {
+                _writeFailed = true;
+                try
+                {
+                    Notification.Show("~r~TACTFR 日志初始化失败，日志将不可用");
+                }
+                catch { }
+            }
+        }
 
         public static void Info(string message)
         {
@@ -31,6 +61,13 @@ namespace EF.PoliceMod.Core
 
         private static void Write(string level, string message)
         {
+            if (!_initialized)
+            {
+                Initialize();
+            }
+
+            if (_writeFailed) return;
+
             try
             {
                 File.AppendAllText(
@@ -40,8 +77,7 @@ namespace EF.PoliceMod.Core
             }
             catch
             {
-                // ❗日志系统唯一允许 swallow 的地方
-                // 防止 IO 错误导致游戏崩
+                _writeFailed = true;
             }
         }
     }

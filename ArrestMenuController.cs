@@ -75,6 +75,18 @@ namespace EF.PoliceMod.Systems
             else
                 ArrestStyleState.SelectedStyle = ArrestActionStyle.HandsOnHeadFollow;
 
+            try
+            {
+                var core = EFCore.Instance;
+                var lts = core != null ? core.LockTargetSystem : null;
+                var target = lts != null ? lts.CurrentTarget : null;
+                if (target != null && target.Exists())
+                {
+                    EventBus.Publish(new EF.PoliceMod.Core.SuspectArrestStyleSelectedEvent(target.Handle, ArrestStyleState.SelectedStyle));
+                }
+            }
+            catch { }
+
             EventBus.Publish(new AttemptArrestEvent());
         }
 
@@ -127,8 +139,18 @@ namespace EF.PoliceMod.Systems
             {
                 if (!_confirmHeld)
                 {
-                    ExecuteSelected();
-                    Close();
+                    try
+                    {
+                        ExecuteSelected();
+                    }
+                    catch (Exception ex)
+                    {
+                        ModLog.Error("[ArrestMenu] ExecuteSelected 失败：" + ex);
+                    }
+                    finally
+                    {
+                        Close();
+                    }
                 }
                 _confirmHeld = true;
             }

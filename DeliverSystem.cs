@@ -13,10 +13,14 @@ namespace EF.PoliceMod.Gameplay
     {
         private readonly LockTargetSystem _lockTargetSystem;
 
-        // Mission Row Police Station（与 DutyLifecycleController 保持一致；另加 CaseManager 的坐标作兼容）
         private readonly Vector3 _policeStationPos = new Vector3(441.2f, -981.9f, 30.7f);
         private readonly Vector3 _policeStationPosAlt = new Vector3(443.5f, -981.0f, 30.7f);
         private const float DeliverRadius = 18.0f;
+
+        private bool _waitingForSuspectExit = false;
+        private int _exitTargetHandle = -1;
+        private int _exitTimeoutMs = 0;
+        private Vehicle _exitVehicle = null;
         private Ped GetDeliverTarget()
         {
             // Step3：案件链路优先（主嫌疑人），避免巡逻/非案件锁定目标误交付
@@ -177,13 +181,40 @@ namespace EF.PoliceMod.Gameplay
         /// </summary>
         public void Update()
         {
-            
+            if (_waitingForSuspectExit)
+            {
+                try
+                {
+                    Ped target = Entity.FromHandle(_exitTargetHandle) as Ped;
+
+                    if (!target.Exists() || !target.IsInVehicle())
+                    {
+                        _waitingForSuspectExit = false;
+                        CompleteDelivery(target);
+                        return;
+                    }
+
+                    if (Game.GameTime >= _exitTimeoutMs)
+                    {
+                        ModLog.Warn("[Deliver] 退出超时，强制传送");
+                        try { target.Task.WarpOutOfVehicle(_exitVehicle); } catch { }
+                        _waitingForSuspectExit = false;
+                        CompleteDelivery(target);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ModLog.Error("[Deliver] 退出等待错误：" + ex);
+                    _waitingForSuspectExit = false;
+                }
+                return;
+            }
 
             if (!CanShowDeliverHint())
                 return;
 
             GTA.UI.Screen.ShowSubtitle($"~y~按 {EF.PoliceMod.Core.KeyBindings.DeliverSuspect} 键交付嫌疑人", 1);
-
         }
 
 
@@ -228,11 +259,9 @@ namespace EF.PoliceMod.Gameplay
 
             if (target.IsInVehicle())
             {
-                
-
                 try
                 {
-                    try { target.Task.ClearAll(); } catch (Exception) { /* best effort */ }
+                    try { target.Task.ClearAll(); } catch { }
                     target.BlockPermanentEvents = true;
                     target.AlwaysKeepTask = true;
 
@@ -247,27 +276,23 @@ namespace EF.PoliceMod.Gameplay
 
                     if (SupportsAnimatedExit(veh))
                     {
-                        // 正常动画下车 —— 用 try/catch 保护
                         try
                         {
                             target.Task.LeaveVehicle(veh, LeaveVehicleFlags.None);
-
-                            int timeout = Game.GameTime + 5000;
-                            while (target.Exists() && target.IsInVehicle() && Game.GameTime < timeout)
-                            {
-                                Script.Wait(0);
-                            }
+                            _waitingForSuspectExit = true;
+                            _exitTargetHandle = target.Handle;
+                            _exitVehicle = veh;
+                            _exitTimeoutMs = Game.GameTime + 5000;
+                            return;
                         }
                         catch (Exception ex)
                         {
                             ModLog.Error("[Deliver] LeaveVehicle failed: " + ex);
-                            // 兜底：尝试 warp out
-                            try { target.Task.WarpOutOfVehicle(veh); } catch (Exception ex2) { ModLog.Error("[Deliver] WarpOut fallback failed: " + ex2); }
+                            try { target.Task.WarpOutOfVehicle(veh); } catch { }
                         }
                     }
                     else
                     {
-                        // 兜底：安全瞬移（避免卡模型）
                         try
                         {
                             target.Task.WarpOutOfVehicle(veh);
@@ -286,14 +311,14 @@ namespace EF.PoliceMod.Gameplay
                 }
             }
 
+            CompleteDelivery(target);
+        }
 
-            // 奖励与提示
+        private void CompleteDelivery(Ped target)
+        {
             Game.Player.Money += 10000;
             GTA.UI.Notification.Show("~g~嫌疑人已成功交付\n~w~+$10000");
 
-            // ★ 先通知案件完成（保证订阅者在 Ped 仍可用时接收通知）
-            // 这样订阅方在收到事件时还能安全地对 Ped 做 Exists()/Task 查询。
-            // 同时用 try/catch 保护防止订阅者抛异常影响本流程。
             try
             {
                 EventBus.Publish(new EF.PoliceMod.Core.SuspectDeliveredEvent(target.Handle));
@@ -303,7 +328,6 @@ namespace EF.PoliceMod.Gameplay
                 ModLog.Error("[Deliver] Publish SuspectDeliveredEvent failed: " + exPub);
             }
 
-            // ★ 最终清理（在事件发布后再清理 Ped）
             try
             {
                 FinalizeDeliveredSuspect(target);
@@ -313,7 +337,6 @@ namespace EF.PoliceMod.Gameplay
                 ModLog.Error("[Deliver] FinalizeDeliveredSuspect failed: " + exFinalize);
             }
 
-            // ★ 清空锁定（放在清理之后也可以；如果你希望在发布事件后立即解除锁定以避免并发访问，也可将此行移到事件发布后；此处保守地在清理后执行）
             try
             {
                 _lockTargetSystem.ForceClear();

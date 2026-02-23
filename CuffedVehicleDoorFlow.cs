@@ -1,6 +1,7 @@
 using EF.PoliceMod.Core;
 using EF.PoliceMod.Executors;
 using GTA;
+using GTA.Native;
 using System;
 
 namespace EF.PoliceMod.Executors
@@ -21,6 +22,9 @@ namespace EF.PoliceMod.Executors
 
         private int _lastExitVehicleHandle = 0;
         private int _lastExitDoorIndex = -1;
+
+        private int _lastExitAtMs = 0;
+
 
         public void ArmPendingShutDoor(int vehicleHandle, int doorIndex, int suspectHandle, int nowMs)
         {
@@ -88,9 +92,37 @@ namespace EF.PoliceMod.Executors
 
         public void RecordExitDoor(int vehicleHandle, int doorIndex)
         {
-            _lastExitVehicleHandle = vehicleHandle;
-            _lastExitDoorIndex = doorIndex;
+            _lastExitVehicleHandle = vehicleHandle;            _lastExitDoorIndex = doorIndex;
+            try { _lastExitAtMs = Game.GameTime; } catch { _lastExitAtMs = 0; }
         }
+
+        /// <summary>
+        /// 兜底：嫌疑人已经下车，但没有记录到具体 doorIndex（例如自动下车/同步下车）。
+        /// 这里 best-effort 关后门（或关可用门），避免“门倔驴一样一直开着”。
+        /// </summary>
+        public void TryShutDoorAfterExitFallback(ArrestActionStyle style, Vehicle vehicle)
+        {
+            if (!SuspectVehicleEscortExecutor.VehicleEscortLine.ShouldAutoDoors(style)) return;
+            if (vehicle == null || !vehicle.Exists()) return;
+
+            // 避免每帧狂关（有些车门动画需要时间）
+            try
+            {
+                int now = Game.GameTime;
+                if (_lastExitAtMs != 0 && now - _lastExitAtMs < 600) return;
+            }
+            catch { }
+
+            // 优先关后门；门不存在则 fallback 到副驾门（2）。
+            int d1 = 1, d3 = 3;
+            try { if (!Function.Call<bool>(Hash.GET_IS_DOOR_VALID, vehicle.Handle, d1)) d1 = 2; } catch { d1 = 2; }
+            try { if (!Function.Call<bool>(Hash.GET_IS_DOOR_VALID, vehicle.Handle, d3)) d3 = 2; } catch { d3 = 2; }
+            try { VehicleDoorOps.ShutDoor(vehicle, d1); } catch { }
+            try { VehicleDoorOps.ShutDoor(vehicle, d3); } catch { }
+        }
+
+
+
 
         public void TryShutDoorAfterExit(ArrestActionStyle style, Func<int, Vehicle> vehicleResolver, Func<Vehicle, int, int> normalizeDoorIndex)
         {

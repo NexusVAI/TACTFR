@@ -29,7 +29,10 @@ namespace EF.PoliceMod
 
         public static EFCore Instance { get; private set; }
         private SuspectController _suspectController;
+        // 重构 Step1：为双嫌疑人不同风格做准备（仅存储，不改变旧行为）
+        private EF.PoliceMod.Core.SuspectStyleRegistry _suspectStyleRegistry;
         public SuspectController GetSuspectController()
+
         {
           
 
@@ -75,11 +78,26 @@ namespace EF.PoliceMod
 
         private EF.PoliceMod.Systems.PlayerRespawnFixSystem _respawnFix;
 
+
+        // Step4：每嫌疑人 StateHub 的准备工作（Router + ContextRegistry）
+        private EF.PoliceMod.Suspects.SuspectContextRegistry _suspectCtxRegistry;
+        private EF.PoliceMod.Suspects.StateHubRouter _stateHubRouter;
+        private EF.PoliceMod.Suspects.StateWriterGate _stateWriterGate;
+
+
+
+        /// <summary>
+        /// Step4c：对外只读暴露 Router（后续迁移时其它模块按 handle 查询 hub）
+        /// </summary>
+        public EF.PoliceMod.Suspects.StateHubRouter StateHubRouter => _stateHubRouter;
+
+
+
         public EFCore()
         {
+            ModLog.Initialize();
             try
             {
-                // 在 EFCore() 构造里最开始处加入：
                 try
                 {
                     AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
@@ -89,10 +107,10 @@ namespace EF.PoliceMod
                             var ex = args.ExceptionObject as Exception;
                             ModLog.Error("[EFCore] UnhandledException: " + (ex?.ToString() ?? args.ExceptionObject.ToString()));
                         }
-                        catch { /* 防止二次抛出 */ }
+                        catch { }
                     };
                 }
-                catch (Exception) { /* best effort */ }
+                catch (Exception) { }
 
             ModLog.Info("EFCore initialized");
             Instance = this;
@@ -124,6 +142,13 @@ namespace EF.PoliceMod
             _helpController = new EF.PoliceMod.Core.HelpController();
             _suspectStateHub = new SuspectStateHub();
             _suspectController = new SuspectController();
+            _suspectStyleRegistry = new EF.PoliceMod.Core.SuspectStyleRegistry();
+            _suspectCtxRegistry = new EF.PoliceMod.Suspects.SuspectContextRegistry();
+            _stateWriterGate = new EF.PoliceMod.Suspects.StateWriterGate();
+            _stateHubRouter = new EF.PoliceMod.Suspects.StateHubRouter(_suspectCtxRegistry, _suspectStateHub, _stateWriterGate);
+
+
+
 
             // 步行执行器（监听 SuspectStateHub + 每帧牵引维护）
             _suspectOnFootExecutor = new SuspectOnFootExecutor(
@@ -180,8 +205,13 @@ namespace EF.PoliceMod
             // 这样：SuspectEscortBeginEvent 发布后，状态机会进入 Escorting，从而触发 OnFootExecutor 的 StartFollow
             EventBus.Subscribe<EF.PoliceMod.Input.SuspectEscortBeginEvent>(_ =>
             {
-                _suspectStateHub.ChangeState(SuspectState.Escorting);
+                // Step4d-1（准备）：Escorting 状态写入走 Router（默认 gate 关闭 => 仍写 legacy）
+                int h = -1;
+                try { h = LockTargetSystem != null && LockTargetSystem.CurrentTarget != null && LockTargetSystem.CurrentTarget.Exists() ? LockTargetSystem.CurrentTarget.Handle : -1; } catch { h = -1; }
+                try { _stateHubRouter?.GetWriterHubFor(h, SuspectState.Escorting)?.ChangeState(SuspectState.Escorting); }
+                catch { _suspectStateHub.ChangeState(SuspectState.Escorting); }
                 ModLog.Info("[EFCore] Event -> State: SuspectEscortBeginEvent -> Escorting");
+
             });
 
 
@@ -252,7 +282,16 @@ namespace EF.PoliceMod
             // 上拷演出系统
             _cuffSeq = new EF.PoliceMod.Systems.CuffingSequenceSystem();
 
-            // 警服更换点（警局内蓝色圈+衣服图标 blip）
+
+            try
+            {
+                EventBus.Subscribe<EF.PoliceMod.Core.SuspectArrestStyleSelectedEvent>(e =>
+                {
+                    try { _suspectStyleRegistry?.SetStyle(e.SuspectHandle, e.Style); } catch { }
+                });
+            }
+            catch { }
+
             _uniformSystem = new EF.PoliceMod.Systems.PoliceUniformSystem();
 
             // 警员小队系统（F8 菜单 + AI + HUD）

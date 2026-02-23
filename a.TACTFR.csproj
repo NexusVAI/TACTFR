@@ -131,7 +131,11 @@
     <Compile Include="Snapshots.cs" />
     <Compile Include="SoundFx.cs" />
     <Compile Include="SquadStatusHud.cs" />
+    <Compile Include="StateHubRouter.cs" />
     <Compile Include="StateMachine.cs" />
+    <Compile Include="StateWriterGate.cs" />
+    <Compile Include="SuspectArrestStyleSelectedEvent.cs" />
+    <Compile Include="SuspectContextRegistry.cs" />
     <Compile Include="SuspectController.cs" />
     <Compile Include="SuspectDeadEvent.cs" />
     <Compile Include="SuspectDeliveredEvent.cs" />
@@ -142,8 +146,10 @@
     <Compile Include="SuspectHandleListChangedEvent.cs" />
     <Compile Include="SuspectOnFootExecutor.cs" />
     <Compile Include="SuspectResistEvent.cs" />
+    <Compile Include="SuspectRuntimeContext.cs" />
     <Compile Include="SuspectState.cs" />
     <Compile Include="SuspectStateHub.cs" />
+    <Compile Include="SuspectStyleRegistry.cs" />
     <Compile Include="SuspectVehicleEscortExecutor.cs" />
     <Compile Include="TargetState.cs" />
     <Compile Include="TerminalAccessEvents.cs" />
