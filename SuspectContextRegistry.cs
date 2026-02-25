@@ -19,7 +19,8 @@ namespace EF.PoliceMod.Suspects
             ctx = new SuspectRuntimeContext(handle);
             _byHandle[handle] = ctx;
             return ctx;
-        }
+        }
+
 
         /// <summary>
         /// Step4c/Step6 预留：当句柄列表变化时，确保所有嫌疑人上下文都已创建。
