@@ -20,8 +20,21 @@ namespace EF.PoliceMod.Core
 
             T oldState = CurrentState;
             CurrentState = newState;
+            FireStateChanged(oldState, newState);
+        }
 
-            // ��ȫ�������ж����ߣ�������ò������쳣�����ⵥ���ص�������ģ��ը��
+        public void ForceState(T newState)
+        {
+            T oldState = CurrentState;
+            CurrentState = newState;
+            if (!Equals(oldState, newState))
+            {
+                FireStateChanged(oldState, newState);
+            }
+        }
+
+        private void FireStateChanged(T oldState, T newState)
+        {
             var handlers = OnStateChanged;
             if (handlers == null) return;
 

@@ -701,6 +701,16 @@ namespace EF.PoliceMod
                 }
             }
 
+            try
+            {
+                // 关键顺序修复：在生成新嫌疑人前先做全链路清理，避免上一案状态在 TakeControl 时被读取。
+                EFCore.Instance?.GetSuspectStateHub()?.Reset();
+                EFCore.Instance?.GetSuspectController()?.ForceClear(); // 先清控制器内的 compliant/resisting 缓存，防止新案继承旧案状态。
+                EFCore.Instance?.GetSuspectController()?.SetPendingArrestStyle(EF.PoliceMod.Core.ArrestActionStyle.CuffAndLead);
+                EFCore.Instance?.LockTargetSystem?.ForceClear(); // 清锁定目标，防止锁定系统保留旧 handle 影响新案。
+            }
+            catch { }
+
             SpawnSuspect(profile);
 
             // 用完即清：必须在 SpawnSuspect 之后，避免本次案件读不到终端预设（双人案件会退化成单人）

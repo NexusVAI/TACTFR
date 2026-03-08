@@ -23,6 +23,9 @@ namespace EF.PoliceMod.Executors
 
         private readonly SuspectController _suspectController;
         private readonly SuspectStateHub _stateHub;
+        private readonly SuspectStyleRegistry _styleRegistry;
+        private readonly EF.PoliceMod.Suspects.SuspectContextRegistry _ctxRegistry;
+        private readonly EF.PoliceMod.Suspects.StateHubRouter _hubRouter;
 
         // 车门动作节流：避免每帧重复 Open/Close 导致车辆物理抖动/倾斜甚至翻车
         private const int DOOR_ACTION_COOLDOWN_MS = 650;
@@ -80,7 +83,7 @@ namespace EF.PoliceMod.Executors
         {
             if (suspect == null || !suspect.Exists()) return;
             if (suspect.IsDead) return;
-            if (!VehicleEscortLine.IsCuffed(GetStyle())) return;
+            if (!VehicleEscortLine.IsCuffed(GetStyleFor(suspect.Handle))) return;
 
             CuffedPoseOps.EnsureClipset(
                 suspect,
@@ -95,7 +98,7 @@ namespace EF.PoliceMod.Executors
         {
             if (suspect == null || !suspect.Exists()) return;
             if (suspect.IsDead) return;
-            if (!VehicleEscortLine.IsCuffed(GetStyle())) return;
+            if (!VehicleEscortLine.IsCuffed(GetStyleFor(suspect.Handle))) return;
 
             CuffedPoseOps.EnsureUpperBodyIdle(
                 suspect,
@@ -173,7 +176,7 @@ namespace EF.PoliceMod.Executors
             int handle = suspect.Handle;
             if (_lastBoardedSuspectHandle == handle && nowMs - _lastBoardedAtMs < 2000) return;
 
-            if (_requireFollowBeforeBoard && (!_isSuspectFollowing || _followingSuspectHandle != handle)) return;
+            if (_requireFollowBeforeBoard && !IsSuspectFollowing(handle)) return;
             _lastBoardedSuspectHandle = handle;
             _lastBoardedAtMs = nowMs;
             try { EventBus.Publish(new EF.PoliceMod.Core.SuspectBoardedVehicleEvent(handle)); } catch { }
@@ -192,8 +195,7 @@ namespace EF.PoliceMod.Executors
 
             try { _suspectController.UnmarkBusy(handle); } catch { }
 
-            _isSuspectFollowing = false;
-            _followingSuspectHandle = -1;
+            SetSuspectFollowing(handle, false);
         }
 
         private bool TickCuffedVehicleEscort(
@@ -213,7 +215,7 @@ namespace EF.PoliceMod.Executors
             try
             {
                 if (ShouldAutoVehicleSync(style)
-                    && (_stateHub.Is(SuspectState.EnteringVehicle) || _stateHub.Is(SuspectState.InVehicle) || _stateHub.Is(SuspectState.ExitingVehicle)))
+                    && (IsState(SuspectState.EnteringVehicle) || IsState(SuspectState.InVehicle) || IsState(SuspectState.ExitingVehicle)))
                 {
                     try { Function.Call(Hash.SET_ENABLE_HANDCUFFS, suspect.Handle, true); } catch { }
                     try { Function.Call(Hash.SET_ENABLE_BOUND_ANKLES, suspect.Handle, true); } catch { }
@@ -229,7 +231,7 @@ namespace EF.PoliceMod.Executors
                 try
                 {
                     if (ShouldAutoVehicleSync(style)
-                        && _stateHub.Is(SuspectState.Escorting)
+                        && IsState(SuspectState.Escorting)
                         && !suspect.IsInVehicle()
                         && player.CurrentVehicle != null
                         && player.CurrentVehicle.Exists())
@@ -238,7 +240,7 @@ namespace EF.PoliceMod.Executors
                         try { gettingIn = Function.Call<bool>(Hash.IS_PED_GETTING_INTO_A_VEHICLE, suspect.Handle); } catch { gettingIn = false; }
                         if (!gettingIn && suspect.Position.DistanceTo(player.Position) < 7.0f)
                         {
-                            _stateHub.ChangeState(SuspectState.EnteringVehicle);
+                            ChangeState(SuspectState.EnteringVehicle);
                             _wasPlayerInVehicle = playerInVehicle;
                             return true;
                         }
@@ -253,14 +255,14 @@ namespace EF.PoliceMod.Executors
                 try
                 {
                     if (ShouldAutoVehicleSync(style)
-                        && _stateHub.Is(SuspectState.InVehicle)
+                        && IsState(SuspectState.InVehicle)
                         && suspect.IsInVehicle())
                     {
                         bool gettingIn = false;
                         try { gettingIn = Function.Call<bool>(Hash.IS_PED_GETTING_INTO_A_VEHICLE, suspect.Handle); } catch { gettingIn = false; }
                         if (!gettingIn)
                         {
-                            _stateHub.ChangeState(SuspectState.ExitingVehicle);
+                            ChangeState(SuspectState.ExitingVehicle);
                             _wasPlayerInVehicle = playerInVehicle;
                             return true;
                         }
@@ -272,18 +274,18 @@ namespace EF.PoliceMod.Executors
             _wasPlayerInVehicle = playerInVehicle;
 
             // EnteringVehicle -> InVehicle
-            if (_stateHub.Is(SuspectState.EnteringVehicle) && suspect.IsInVehicle())
+            if (IsState(SuspectState.EnteringVehicle) && suspect.IsInVehicle())
             {
-                _stateHub.ChangeState(SuspectState.InVehicle);
+                ChangeState(SuspectState.InVehicle);
                 try { OnCuffedEnteredVehicle(suspect, style, nowMs); } catch { }
                 return true;
             }
 
 
             // ExitingVehicle -> Escorting
-            if (_stateHub.Is(SuspectState.ExitingVehicle) && !suspect.IsInVehicle())
+            if (IsState(SuspectState.ExitingVehicle) && !suspect.IsInVehicle())
             {
-                _stateHub.ChangeState(SuspectState.Escorting);
+                ChangeState(SuspectState.Escorting);
                 try { OnSuspectExitVehicle(); } catch { }
                 try
                 {
@@ -420,10 +422,16 @@ namespace EF.PoliceMod.Executors
 
         public SuspectVehicleEscortExecutor(
             SuspectController suspectController,
-            SuspectStateHub stateHub)
+            SuspectStateHub stateHub,
+            SuspectStyleRegistry styleRegistry,
+            EF.PoliceMod.Suspects.SuspectContextRegistry ctxRegistry,
+            EF.PoliceMod.Suspects.StateHubRouter hubRouter)
         {
             _suspectController = suspectController;
             _stateHub = stateHub;
+            _styleRegistry = styleRegistry;
+            _ctxRegistry = ctxRegistry;
+            _hubRouter = hubRouter;
 
             // 输入 = 意图
             EventBus.Subscribe<EscortVehicleInteractEvent>(OnVehicleInteract);
@@ -441,10 +449,147 @@ namespace EF.PoliceMod.Executors
             ModLog.Info("[Escort][Vehicle] Executor initialized (StateHub driven)");
         }
 
+        private SuspectStateHub GetActiveHub()
+        {
+            try
+            {
+                var suspect = _suspectController?.GetCurrentSuspect();
+                if (suspect != null && suspect.Exists() && _hubRouter != null)
+                {
+                    return _hubRouter.GetHubFor(suspect.Handle);
+                }
+            }
+            catch { }
+            return _stateHub;
+        }
+
+        private SuspectStateHub GetActiveHubFor(int handle)
+        {
+            try
+            {
+                if (handle > 0 && _hubRouter != null)
+                {
+                    return _hubRouter.GetHubFor(handle);
+                }
+            }
+            catch { }
+            return _stateHub;
+        }
+
+        private bool IsState(SuspectState state)
+        {
+            return GetActiveHub().Is(state);
+        }
+
+        private bool IsStateFor(int handle, SuspectState state)
+        {
+            return GetActiveHubFor(handle).Is(state);
+        }
+
+        private void ChangeState(SuspectState newState)
+        {
+            try
+            {
+                var suspect = _suspectController?.GetCurrentSuspect();
+                int h = suspect != null && suspect.Exists() ? suspect.Handle : -1;
+                if (_hubRouter != null)
+                {
+                    var hub = _hubRouter.GetWriterHubFor(h, newState);
+                    hub.ChangeState(newState);
+                    return;
+                }
+            }
+            catch { }
+            _stateHub.ChangeState(newState);
+        }
+
+        public void SubscribeToPerHandleHub(SuspectStateHub perHandleHub)
+        {
+            if (perHandleHub == null) return;
+            try { perHandleHub.OnStateChanged -= OnSuspectStateChanged; } catch { }
+            perHandleHub.OnStateChanged += OnSuspectStateChanged;
+            ModLog.Info($"[Escort][Vehicle] Subscribed to per-handle hub (handle={perHandleHub.SuspectHandle})");
+        }
+
         private ArrestActionStyle GetStyle()
         {
+            try
+            {
+                var suspect = _suspectController?.GetCurrentSuspect();
+                if (suspect != null && suspect.Exists() && _styleRegistry != null)
+                {
+                    return _styleRegistry.GetStyleOrDefault(
+                        suspect.Handle,
+                        _suspectController.CurrentArrestStyle
+                    );
+                }
+            }
+            catch { }
+
             try { return _suspectController != null ? _suspectController.CurrentArrestStyle : ArrestActionStyle.CuffAndLead; }
             catch { return ArrestActionStyle.CuffAndLead; }
+        }
+
+        private ArrestActionStyle GetStyleFor(int suspectHandle)
+        {
+            try
+            {
+                if (suspectHandle > 0 && _styleRegistry != null)
+                {
+                    return _styleRegistry.GetStyleOrDefault(
+                        suspectHandle,
+                        ArrestActionStyle.CuffAndLead
+                    );
+                }
+            }
+            catch { }
+
+            try { return _suspectController != null ? _suspectController.CurrentArrestStyle : ArrestActionStyle.CuffAndLead; }
+            catch { return ArrestActionStyle.CuffAndLead; }
+        }
+
+        private bool IsSuspectFollowing(int handle)
+        {
+            try
+            {
+                if (handle > 0 && _ctxRegistry != null)
+                {
+                    if (_ctxRegistry.TryGet(handle, out var ctx))
+                    {
+                        return ctx.FollowRequested;
+                    }
+                }
+            }
+            catch { }
+
+            return _isSuspectFollowing && _followingSuspectHandle == handle;
+        }
+
+        private void SetSuspectFollowing(int handle, bool following)
+        {
+            try
+            {
+                if (handle > 0 && _ctxRegistry != null)
+                {
+                    var ctx = _ctxRegistry.GetOrCreate(handle);
+                    if (ctx != null)
+                    {
+                        ctx.FollowRequested = following;
+                    }
+                }
+            }
+            catch { }
+
+            if (following)
+            {
+                _isSuspectFollowing = true;
+                _followingSuspectHandle = handle;
+            }
+            else
+            {
+                _isSuspectFollowing = false;
+                _followingSuspectHandle = -1;
+            }
         }
 
         private int GetSeatIndexForDoorId(int doorId) => VehicleSeatDoorOps.GetSeatIndexForDoorId(doorId);
@@ -504,12 +649,13 @@ namespace EF.PoliceMod.Executors
             if (suspect.IsInVehicle()) return;
             try
             {
-                if (GetStyle() == ArrestActionStyle.CuffAndLead)
+                var style = GetStyleFor(suspect.Handle);
+                if (style == ArrestActionStyle.CuffAndLead)
                 {
                     try { Function.Call(Hash.SET_ENABLE_HANDCUFFS, suspect.Handle, true); } catch { }
                     try { Function.Call(Hash.SET_ENABLE_BOUND_ANKLES, suspect.Handle, true); } catch { }
                 }
-                SuspectFollowOps.StartFollow(_suspectController, suspect, GetStyle());
+                SuspectFollowOps.StartFollow(_suspectController, suspect, style);
             }
             catch { }
         }
@@ -549,7 +695,7 @@ namespace EF.PoliceMod.Executors
         // 让嫌疑人跟随玩家（调用 native 任务）
         private void MakeSuspectFollow(Ped suspect)
         {
-            SuspectFollowOps.StartFollow(_suspectController, suspect, GetStyle());
+            SuspectFollowOps.StartFollow(_suspectController, suspect, GetStyleFor(suspect.Handle));
             ;
         }
 
@@ -601,14 +747,14 @@ namespace EF.PoliceMod.Executors
                 return;
             }
 
-            if (suspect.IsDead || (suspect.IsRagdoll && !_stateHub.Is(SuspectState.InVehicle)))
+            if (suspect.IsDead || (suspect.IsRagdoll && !IsState(SuspectState.InVehicle)))
             {
                 ModLog.Warn("[Escort][Vehicle] E pressed but suspect not controllable");
                 return;
             }
 
             // 防止在中间态重复触发（去抖）
-            if (_stateHub.Is(SuspectState.EnteringVehicle) || _stateHub.Is(SuspectState.ExitingVehicle))
+            if (IsState(SuspectState.EnteringVehicle) || IsState(SuspectState.ExitingVehicle))
             {
                 ModLog.Info("[Escort][Vehicle] E pressed but suspect is transitioning");
                 return;
@@ -623,14 +769,15 @@ namespace EF.PoliceMod.Executors
 
             // E 门禁：按线路分流（被拷线 vs 抱头线）
             bool pullOverBypass = false;
-            try { pullOverBypass = _pullOverBypass.IsActive(GetStyle(), suspect.Handle, Game.GameTime); } catch { pullOverBypass = false; }
+            ArrestActionStyle interactStyle = GetStyleFor(suspect.Handle);
+            try { pullOverBypass = _pullOverBypass.IsActive(interactStyle, suspect.Handle, Game.GameTime); } catch { pullOverBypass = false; }
 
-            if (!VehicleEscortInteractGate.EnsureAllowed(GetStyle(), suspect, pullOverBypass))
+            if (!VehicleEscortInteractGate.EnsureAllowed(interactStyle, suspect, pullOverBypass))
                 return;
 
             // 规则：E 只负责“上下车”；前置必须先按 G 进入押送。
             // Restrained 状态下按 E 只提示，不做任何自动跟随/自动押送。
-            if (_stateHub.Is(SuspectState.Restrained))
+            if (IsState(SuspectState.Restrained))
             {
                 Notification.Show("~y~请先按 G 让嫌疑人跟随，再按 E 上下车");
                 return;
@@ -638,7 +785,7 @@ namespace EF.PoliceMod.Executors
 
 
             // 上车：Escorting（步行押送）
-            if (_stateHub.Is(SuspectState.Escorting))
+            if (IsState(SuspectState.Escorting))
             {
                 bool requireFollow = _requireFollowBeforeBoard;
                 try
@@ -650,7 +797,7 @@ namespace EF.PoliceMod.Executors
                 if (requireFollow)
                 {
                     // E 前置 G：如果没按 G（跟随未开启），直接拒绝（不再由 E 自动补跟随）。
-                    if (!_isSuspectFollowing || _followingSuspectHandle != suspect.Handle)
+                    if (!IsSuspectFollowing(suspect.Handle))
                     {
                         Notification.Show("~y~请先按 G 让嫌疑人跟随，再按 E 上车");
                         return;
@@ -709,7 +856,7 @@ namespace EF.PoliceMod.Executors
                         try { EnsureCuffedClipset(suspect); } catch { }
                         try { suspect.Task.EnterVehicle(nearVeh, seat2, -1, 1.6f); } catch { }
 
-                        _stateHub.ChangeState(SuspectState.EnteringVehicle);
+                        ChangeState(SuspectState.EnteringVehicle);
                         try { ApplyActionToOtherCompliantCaseSuspects(suspect.Handle, p => TryMakeSecondaryBoard(p, player)); } catch { }
                         ModLog.Info("[Escort][Vehicle] CuffAndLead on-foot E -> EnteringVehicle issued");
                         return;
@@ -758,7 +905,7 @@ namespace EF.PoliceMod.Executors
                 }
 
                 // 进入过渡态：只切状态，由 OnStateChanged 统一执行 StartEnterVehicle（避免重复下任务）
-                _stateHub.ChangeState(SuspectState.EnteringVehicle);
+                ChangeState(SuspectState.EnteringVehicle);
                 try { ApplyActionToOtherCompliantCaseSuspects(suspect.Handle, p => TryMakeSecondaryBoard(p, player)); } catch { }
                 ModLog.Info("[Escort][Vehicle] E pressed → EnteringVehicle issued");
 
@@ -766,7 +913,7 @@ namespace EF.PoliceMod.Executors
             }
 
             // 下车：仅在 InVehicle 时触发
-            if (_stateHub.Is(SuspectState.InVehicle))
+            if (IsState(SuspectState.InVehicle))
             {
                 // 同样做近距与可控性保障
                 if (suspect.Position.DistanceTo(player.Position) > 6.0f)
@@ -775,7 +922,7 @@ namespace EF.PoliceMod.Executors
                     return;
                 }
                 // 同上：只切状态，由 OnStateChanged 统一执行 StartExitVehicle（避免重复下任务）
-                _stateHub.ChangeState(SuspectState.ExitingVehicle);
+                ChangeState(SuspectState.ExitingVehicle);
                 ModLog.Info("[Escort][Vehicle] E pressed → ExitingVehicle issued");
                 return;
             }
@@ -804,7 +951,7 @@ namespace EF.PoliceMod.Executors
                 // 上车/下车过渡态：忽略 G（否则会把 EnteringVehicle 流程打断，日志里反复出现 transition）
                 try
                 {
-                    if (_stateHub.Is(SuspectState.EnteringVehicle) || _stateHub.Is(SuspectState.ExitingVehicle))
+                    if (IsState(SuspectState.EnteringVehicle) || IsState(SuspectState.ExitingVehicle))
                     {
                         Notification.Show("~y~嫌疑人正在上下车，请稍等");
                         return;
@@ -815,12 +962,10 @@ namespace EF.PoliceMod.Executors
                 // 如果当前嫌疑人在车内 -> 请求其下车（优先下车）
                 if (suspect.IsInVehicle())
                 {
-                    // 取消跟随标记（如果之前有）
-                    _isSuspectFollowing = false;
-                    _followingSuspectHandle = -1;
+                    SetSuspectFollowing(suspect.Handle, false);
 
                     // 发起下车流程：只切状态，由 OnStateChanged 统一执行 StartExitVehicle（避免重复下任务）
-                    _stateHub.ChangeState(SuspectState.ExitingVehicle);
+                    ChangeState(SuspectState.ExitingVehicle);
                     ModLog.Info("[Escort][Follow] Follow pressed -> suspect in vehicle -> ExitVehicle issued");
 
                     Notification.Show("请求嫌疑人下车");
@@ -828,17 +973,16 @@ namespace EF.PoliceMod.Executors
                 }
 
                 // 如果不在车内：切换跟随/取消跟随
-                if (!_isSuspectFollowing || _followingSuspectHandle != suspect.Handle)
+                if (!IsSuspectFollowing(suspect.Handle))
                 {
                     // 关闭“受惊逃跑”随机触发：按 G 只负责进入跟随，避免流程被随机打断。
 
-                    _isSuspectFollowing = true;
-                    _followingSuspectHandle = suspect.Handle;
+                    SetSuspectFollowing(suspect.Handle, true);
 
                     // 被拷线：按 G 的瞬间强制维持被拷态（双手在后）
                     try
                     {
-                        if (GetStyle() == ArrestActionStyle.CuffAndLead)
+                        if (GetStyleFor(suspect.Handle) == ArrestActionStyle.CuffAndLead)
                         {
                             try { Function.Call(Hash.SET_ENABLE_HANDCUFFS, suspect.Handle, true); } catch { }
                             try { Function.Call(Hash.SET_ENABLE_BOUND_ANKLES, suspect.Handle, true); } catch { }
@@ -858,8 +1002,7 @@ namespace EF.PoliceMod.Executors
                 else
                 {
                     // 已经在跟随 -> 取消跟随
-                    _isSuspectFollowing = false;
-                    _followingSuspectHandle = -1;
+                    SetSuspectFollowing(suspect.Handle, false);
 
                     try { StopSuspectFollow(suspect); } catch { }
 
@@ -893,8 +1036,13 @@ namespace EF.PoliceMod.Executors
         {
             try
             {
-                _isSuspectFollowing = false;
-                _followingSuspectHandle = -1;
+                SetSuspectFollowing(-1, false);
+                try
+                {
+                    if (_ctxRegistry != null)
+                        _ctxRegistry.Clear();
+                }
+                catch { }
                 ModLog.Info("[Escort][Vehicle] Case ended - reset follow state");
             }
             catch (Exception ex)
@@ -1069,10 +1217,11 @@ namespace EF.PoliceMod.Executors
             var seat = FindAvailableSeatForSuspect(vehicle);
             if (seat == VehicleSeat.None) return;
 
+            var style = GetStyleFor(suspect.Handle);
             try
             {
                 // 仅在需要自动开门时处理车门
-                if (ShouldAutoDoors(GetStyle()))
+                if (ShouldAutoDoors(style))
                 {
                     int doorIndex = NormalizeDoorIndex(vehicle, GetDoorIndexForSeat(seat));
                     try { VehicleDoorOps.OpenDoor(vehicle, doorIndex); } catch { }
@@ -1082,7 +1231,7 @@ namespace EF.PoliceMod.Executors
             catch { }
 
             try { suspect.Task.ClearAll(); } catch { }
-            if (ShouldAutoVehicleSync(GetStyle()))
+            if (ShouldAutoVehicleSync(style))
             {
                 try { EnsureCuffedClipset(suspect); } catch { }
                 try { EnsureCuffedUpperBodyPose(suspect); } catch { }
@@ -1106,7 +1255,7 @@ namespace EF.PoliceMod.Executors
         {
             var suspect = _suspectController.GetCurrentSuspect();
             int now = Game.GameTime;
-            OnCuffedEnteredVehicle(suspect, GetStyle(), now);
+            OnCuffedEnteredVehicle(suspect, GetStyleFor(suspect != null && suspect.Exists() ? suspect.Handle : -1), now);
         }
 
 
@@ -1137,7 +1286,7 @@ namespace EF.PoliceMod.Executors
                 // 下车后关门（兜底，避免 door pending 残留）
                 try
                 {
-                    if (_stateHub.Is(SuspectState.Escorting))
+                    if (IsState(SuspectState.Escorting))
                     {
                         _cuffedDoorFlow.TryShutDoorAfterExit(
                             style,

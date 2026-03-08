@@ -6,8 +6,4 @@ namespace EF.PoliceMod.Core
         HandsOnHeadFollow = 2,
     }
 
-    public static class ArrestStyleState
-    {
-        public static ArrestActionStyle SelectedStyle = ArrestActionStyle.CuffAndLead;
-    }
 }

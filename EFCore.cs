@@ -62,6 +62,7 @@ namespace EF.PoliceMod
         private EF.PoliceMod.Systems.SquadStatusHud _squadHud;
         private EF.PoliceMod.Systems.ArrestSuppressionSystem _arrestSuppression;
         private EF.PoliceMod.Systems.PatrolSystem _patrol;
+        private EF.PoliceMod.Systems.PoliceRadioSystem _radioSystem;
 
 
         private EF.PoliceMod.Systems.PatrolFleeSystem _patrolFlee;
@@ -96,6 +97,7 @@ namespace EF.PoliceMod
         public EFCore()
         {
             ModLog.Initialize();
+            ModConfig.Load();
             try
             {
                 try
@@ -127,6 +129,7 @@ namespace EF.PoliceMod
                 ModLog.Info("DutyStarted");
                 _lawAuthorityActive = true;
                 EnableLawAuthority();
+                try { _radioSystem?.PlayRadio(EF.PoliceMod.Systems.RadioEvent.DutyStart); } catch { }
             });
 
 
@@ -145,6 +148,20 @@ namespace EF.PoliceMod
             _suspectStyleRegistry = new EF.PoliceMod.Core.SuspectStyleRegistry();
             _suspectCtxRegistry = new EF.PoliceMod.Suspects.SuspectContextRegistry();
             _stateWriterGate = new EF.PoliceMod.Suspects.StateWriterGate();
+            if (FeatureGates.EnablePerHandleStateHub)
+            {
+                _stateWriterGate.UsePerHandleForEscorting = true;
+                _stateWriterGate.UsePerHandleForEnteringVehicle = true;
+                _stateWriterGate.UsePerHandleForInVehicle = true;
+                _stateWriterGate.UsePerHandleForExitingVehicle = true;
+                _stateWriterGate.UsePerHandleForRestrained = true;
+                _stateWriterGate.UsePerHandleForResisting = true;
+                ModLog.Info("[EFCore] Step4: Per-handle StateHub ENABLED");
+            }
+            else
+            {
+                ModLog.Info("[EFCore] Step4: Per-handle StateHub DISABLED (using legacy)");
+            }
             _stateHubRouter = new EF.PoliceMod.Suspects.StateHubRouter(_suspectCtxRegistry, _suspectStateHub, _stateWriterGate);
 
 
@@ -153,7 +170,9 @@ namespace EF.PoliceMod
             // 步行执行器（监听 SuspectStateHub + 每帧牵引维护）
             _suspectOnFootExecutor = new SuspectOnFootExecutor(
                 _suspectController,
-                _suspectStateHub
+                _suspectStateHub,
+                _suspectStyleRegistry,
+                _stateHubRouter
             );
 
 
@@ -181,14 +200,17 @@ namespace EF.PoliceMod
                     // 反抗必须优先：哪怕之前被标记 busy（例如拘捕流程里），也要先解除 busy 再切状态。
                     try { _suspectController.UnmarkBusy(current.Handle); } catch { }
 
-                    if (_suspectStateHub.Is(SuspectState.Resisting))
+                    int h = current.Handle;
+                    var hub = _stateHubRouter?.GetWriterHubFor(h, SuspectState.Resisting) ?? _suspectStateHub;
+                    if (hub.Is(SuspectState.Resisting))
                     {
                         ModLog.Info("[EFCore] SuspectResistEvent ignored: already Resisting");
                         return;
                     }
 
-                    _suspectStateHub.ChangeState(SuspectState.Resisting);
-                    ModLog.Info("[EFCore] Event -> State: SuspectResistEvent -> Resisting");
+                    hub.ChangeState(SuspectState.Resisting);
+                    ModLog.Info($"[EFCore] Event -> State: Resisting (handle={h})");
+                    try { _radioSystem?.PlayRadio(EF.PoliceMod.Systems.RadioEvent.ResistArrest); } catch { }
                 }
                 catch (Exception ex)
                 {
@@ -198,8 +220,15 @@ namespace EF.PoliceMod
             // 实例化并保存：车辆上下车执行器（构造中会 Subscribe EscortVehicleInteractEvent、并监听 StateHub）
             _suspectVehicleEscortExecutor = new SuspectVehicleEscortExecutor(
                 _suspectController,
-                _suspectStateHub
+                _suspectStateHub,
+                _suspectStyleRegistry,
+                _suspectCtxRegistry,
+                _stateHubRouter
             );
+            if (FeatureGates.EnablePerHandleStateHub)
+            {
+                ModLog.Info("[EFCore] Step4: Per-handle event routing active");
+            }
 
             // 事件 → 状态 映射：把 gameplay 事件映射为 SuspectStateHub 的状态变更
             // 这样：SuspectEscortBeginEvent 发布后，状态机会进入 Escorting，从而触发 OnFootExecutor 的 StartFollow
@@ -218,12 +247,25 @@ namespace EF.PoliceMod
 
             // 把 SuspectArrestedEvent 映射为 Restrained（与 OnFootExecutor 的 case 对应）
             // 注意：事件类型在 EF.PoliceMod.Core 命名空间（SuspectController 发布的也是这个）
-            EventBus.Subscribe<EF.PoliceMod.Core.SuspectArrestedEvent>(_ =>
+            EventBus.Subscribe<EF.PoliceMod.Core.SuspectArrestedEvent>(evt =>
             {
                 try
                 {
-                    _suspectStateHub.ChangeState(SuspectState.Restrained);
-                    ModLog.Info("[EFCore] Event -> State: SuspectArrestedEvent -> Restrained");
+                    int h = -1;
+                    try
+                    {
+                        h = evt.SuspectHandle;
+                        if (h <= 0)
+                        {
+                            var t = LockTargetSystem?.CurrentTarget;
+                            h = t != null && t.Exists() ? t.Handle : -1;
+                        }
+                    }
+                    catch { h = -1; }
+
+                    var hub = _stateHubRouter?.GetWriterHubFor(h, SuspectState.Restrained) ?? _suspectStateHub;
+                    hub.ChangeState(SuspectState.Restrained);
+                    ModLog.Info($"[EFCore] Event -> State: SuspectArrestedEvent -> Restrained (handle={h})");
                 }
                 catch (Exception ex)
                 {
@@ -274,6 +316,62 @@ namespace EF.PoliceMod
             {
                 _dualSuspect = new EF.PoliceMod.Systems.DualSuspectCoordinator();
             }
+            try
+            {
+                _radioSystem = new EF.PoliceMod.Systems.PoliceRadioSystem();
+                EventBus.Subscribe<EF.PoliceMod.Core.PullOverRequestedEvent>(_ =>
+                {
+                    try { _radioSystem?.PlayRadio(EF.PoliceMod.Systems.RadioEvent.SuspectInCar); } catch { }
+                });
+                EventBus.Subscribe<EF.PoliceMod.Core.SuspectDeliveredEvent>(_ =>
+                {
+                    try { _radioSystem?.PlayRadio(EF.PoliceMod.Systems.RadioEvent.UnitResponding); } catch { }
+                });
+                EventBus.Subscribe<EF.PoliceMod.Core.HeliReconRequestedEvent>(_ =>
+                {
+                    try { _radioSystem?.PlayRadio(EF.PoliceMod.Systems.RadioEvent.HeliApproaching); } catch { }
+                });
+                EventBus.Subscribe<EF.PoliceMod.Core.SuspectArrestedEvent>(_ =>
+                {
+                    try { _radioSystem?.PlayRadio(EF.PoliceMod.Systems.RadioEvent.RequestBackup); } catch { }
+                });
+                EventBus.Subscribe<EF.PoliceMod.Core.SuspectEscapedEvent>(_ =>
+                {
+                    try { _radioSystem?.PlayRadio(EF.PoliceMod.Systems.RadioEvent.SuspectOnFoot); } catch { }
+                });
+                EventBus.Subscribe<EF.PoliceMod.Core.PullOverExitRequestedEvent>(_ =>
+                {
+                    try { _radioSystem?.PlayRadio(EF.PoliceMod.Systems.RadioEvent.SuspectOnFoot); } catch { }
+                });
+                EventBus.Subscribe<EF.PoliceMod.Core.SuspectDeadEvent>(_ =>
+                {
+                    try { _radioSystem?.PlayRadio(EF.PoliceMod.Systems.RadioEvent.AmbulanceRequested); } catch { }
+                });
+                EventBus.Subscribe<EF.PoliceMod.Core.TerminalCaseSelectedEvent>(_ =>
+                {
+                    try { _radioSystem?.PlayRadio(EF.PoliceMod.Systems.RadioEvent.CaseAccepted); } catch { }
+                });
+                EventBus.Subscribe<EF.PoliceMod.Core.CaseEndedEvent>(_ =>
+                {
+                    try { _radioSystem?.PlayRadio(EF.PoliceMod.Systems.RadioEvent.CaseEnded); } catch { }
+                });
+                EventBus.Subscribe<EF.PoliceMod.Core.TargetLockedEvent>(_ =>
+                {
+                    try { _radioSystem?.PlayRadio(EF.PoliceMod.Systems.RadioEvent.TargetLocked); } catch { }
+                });
+                EventBus.Subscribe<EF.PoliceMod.Core.PatrolSuspectResistEvent>(_ =>
+                {
+                    try { _radioSystem?.PlayRadio(EF.PoliceMod.Systems.RadioEvent.ResistArrest); } catch { }
+                });
+                EventBus.Subscribe<EF.PoliceMod.Core.PatrolSuspectFleeEvent>(_ =>
+                {
+                    try { _radioSystem?.PlayRadio(EF.PoliceMod.Systems.RadioEvent.SuspectOnFoot); } catch { }
+                });
+            }
+            catch (Exception ex)
+            {
+                ModLog.Error("[EFCore] PoliceRadioSystem init failed: " + ex);
+            }
 
 
 
@@ -288,6 +386,19 @@ namespace EF.PoliceMod
                 EventBus.Subscribe<EF.PoliceMod.Core.SuspectArrestStyleSelectedEvent>(e =>
                 {
                     try { _suspectStyleRegistry?.SetStyle(e.SuspectHandle, e.Style); } catch { }
+                    if (FeatureGates.EnablePerHandleStateHub)
+                    {
+                        try
+                        {
+                            var ctx = _suspectCtxRegistry.GetOrCreate(e.SuspectHandle);
+                            if (ctx != null && ctx.StateHub != null)
+                            {
+                                _suspectVehicleEscortExecutor?.SubscribeToPerHandleHub(ctx.StateHub);
+                                _suspectOnFootExecutor?.SubscribeToPerHandleHub(ctx.StateHub);
+                            }
+                        }
+                        catch { }
+                    }
                 });
             }
             catch { }
@@ -327,8 +438,8 @@ namespace EF.PoliceMod
             var _initCaseStatusQuery = EF.PoliceMod.Systems.CaseStatusQuery.HasActiveCase;
             var _initTerminalAccessQuery = EF.PoliceMod.Systems.TerminalAccessQuery.CanOpenTerminal;
 
-            GTA.UI.Notification.Show("5.3.99-TACTFR警察模组加载成功！玩家动力@某宇原创制作 最后更新时间2026/02/16，祝大家新年快乐~模组QQ反馈群1079691553");
-            ModLog.Info("[EFCore] EF Police Mod v5.3.99 loaded");
+            GTA.UI.Notification.Show("5.4.0-TACTFR警察模组加载成功！玩家动力@某宇原创制作 最后更新时间2026/03/07，模组QQ反馈群1079691553");
+            ModLog.Info("[EFCore] EF Police Mod v5.4.0 loaded");
             }
             catch (Exception ex)
             {
@@ -503,6 +614,7 @@ namespace EF.PoliceMod
             // 其他系统（受保护调用，避免任何异常冒泡）
             try { _caseManager.OnTick(); } catch (Exception ex) { ModLog.Error("[EFCore] CaseManager.OnTick exception: " + ex); }
             try { _terminalController?.Tick(); } catch (Exception ex) { ModLog.Error("[EFCore] TerminalController.Tick exception: " + ex); }
+            try { _radioSystem?.Tick(); } catch (Exception ex) { ModLog.Error("[EFCore] RadioSystem.Tick exception: " + ex); }
 
             // NOTE: Removed duplicate calls to _caseManager.OnTick() and _terminalController?.Tick()
             // to prevent double execution and potential side-effects.
@@ -542,6 +654,7 @@ namespace EF.PoliceMod
         private void OnAborted(object sender, EventArgs e)
         {
             ModLog.Warn("EFCore aborted / unloaded");
+            try { ModLog.Flush(); } catch { }
 
             try
             {
@@ -555,6 +668,7 @@ namespace EF.PoliceMod
             LockTargetSystem?.Shutdown();
             EventBus.ClearAll();
             _deliverSystem?.Shutdown();
+            try { _radioSystem?.Dispose(); } catch { }
         }
 
         private void RegisterSystemsToCompositionRoot()

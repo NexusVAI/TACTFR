@@ -647,8 +647,8 @@ namespace EF.PoliceMod.Systems
             try { if (coverOfficer != null && coverOfficer.Exists()) Function.Call(Hash.SET_ENTITY_COLLISION, coverOfficer.Handle, true, true); } catch { }
 
             // 进入“已拘捕/可押送”状态：默认拷线，玩家可按 G 押送
-            try { ArrestStyleState.SelectedStyle = ArrestActionStyle.CuffAndLead; } catch { }
-            try { _suspectController?.Arrest(suspect); } catch { }
+            try { EventBus.Publish(new SuspectArrestStyleSelectedEvent(suspect.Handle, ArrestActionStyle.CuffAndLead)); } catch { }
+            try { EventBus.Publish(new SuspectArrestedEvent(suspect.Handle)); } catch { }
             try { _lockTargetSystem?.AutoLockCompliant(suspect); } catch { }
 
             // ★修复：警员上拷后，嫌疑人必须立刻保持“被拷态”（双手在后），不等玩家按 G。

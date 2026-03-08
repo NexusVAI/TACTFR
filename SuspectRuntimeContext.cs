@@ -1,6 +1,7 @@
 
 using EF.PoliceMod.Core;
 using GTA;
+using GTA.Native;
 
 namespace EF.PoliceMod.Suspects
 {
@@ -45,12 +46,12 @@ namespace EF.PoliceMod.Suspects
             try
             {
                 if (Handle <= 0) return null;
-                // World.GetAllPeds() 成本较高，但 Step1 只用于少量调用与调试；后续可接 EntityTracker 缓存。
-                foreach (var p in World.GetAllPeds())
-                {
-                    if (p != null && p.Exists() && p.Handle == Handle)
-                        return p;
-                }
+                if (!Function.Call<bool>(Hash.DOES_ENTITY_EXIST, Handle))
+                    return null;
+                var ped = Entity.FromHandle(Handle) as Ped;
+                if (ped != null && ped.Exists())
+                    return ped;
+                return null;
             }
             catch { }
             return null;

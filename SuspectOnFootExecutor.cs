@@ -9,6 +9,8 @@ public class SuspectOnFootExecutor
 {
     private readonly SuspectController _controller;
     private readonly SuspectStateHub _stateHub;
+    private readonly SuspectStyleRegistry _styleRegistry;
+    private readonly EF.PoliceMod.Suspects.StateHubRouter _hubRouter;
 
     private int _lastFollowReissueMs = 0;
 
@@ -41,20 +43,62 @@ public class SuspectOnFootExecutor
 
     private EF.PoliceMod.Core.ArrestActionStyle GetStyle()
     {
+        try
+        {
+            var suspect = _controller?.GetCurrentSuspect();
+            if (suspect != null && suspect.Exists() && _styleRegistry != null)
+            {
+                return _styleRegistry.GetStyleOrDefault(
+                    suspect.Handle,
+                    _controller.CurrentArrestStyle
+                );
+            }
+        }
+        catch { }
+
         try { return _controller != null ? _controller.CurrentArrestStyle : EF.PoliceMod.Core.ArrestActionStyle.CuffAndLead; }
         catch { return EF.PoliceMod.Core.ArrestActionStyle.CuffAndLead; }
     }
 
     public SuspectOnFootExecutor(
         SuspectController controller,
-        SuspectStateHub stateHub)
+        SuspectStateHub stateHub,
+        SuspectStyleRegistry styleRegistry,
+        EF.PoliceMod.Suspects.StateHubRouter hubRouter)
     {
         _controller = controller;
         _stateHub = stateHub;
+        _styleRegistry = styleRegistry;
+        _hubRouter = hubRouter;
 
         _stateHub.OnStateChanged += OnStateChanged;
 
         EventBus.Subscribe<SuspectFollowRequestEvent>(OnFollowRequested);
+    }
+
+    private SuspectStateHub GetActiveHub()
+    {
+        try
+        {
+            var suspect = _controller?.GetCurrentSuspect();
+            if (suspect != null && suspect.Exists() && _hubRouter != null)
+                return _hubRouter.GetHubFor(suspect.Handle);
+        }
+        catch { }
+        return _stateHub;
+    }
+
+    private bool IsState(SuspectState state)
+    {
+        return GetActiveHub().Is(state);
+    }
+
+    public void SubscribeToPerHandleHub(SuspectStateHub perHandleHub)
+    {
+        if (perHandleHub == null) return;
+        try { perHandleHub.OnStateChanged -= OnStateChanged; } catch { }
+        perHandleHub.OnStateChanged += OnStateChanged;
+        ModLog.Info($"[OnFootExecutor] Subscribed to per-handle hub (handle={perHandleHub.SuspectHandle})");
     }
 
     private bool IsBusyState(SuspectState s)
@@ -76,7 +120,7 @@ public class SuspectOnFootExecutor
                 TryCompleteArrestAnim();
             }
 
-            if (!_stateHub.Is(SuspectState.Escorting)) return;
+            if (!IsState(SuspectState.Escorting)) return;
 
             var suspect = _controller.GetCurrentSuspect();
             var player = Game.Player.Character;
@@ -86,7 +130,7 @@ public class SuspectOnFootExecutor
             if (suspect.IsDead || suspect.Health <= 0) return;
 
             if (suspect.IsInVehicle() || player.IsInVehicle()) return;
-            if (_stateHub.Is(SuspectState.EnteringVehicle) || _stateHub.Is(SuspectState.ExitingVehicle) || _stateHub.Is(SuspectState.InVehicle)) return;
+            if (IsState(SuspectState.EnteringVehicle) || IsState(SuspectState.ExitingVehicle) || IsState(SuspectState.InVehicle)) return;
 
             var style = GetStyle();
 
@@ -136,7 +180,7 @@ public class SuspectOnFootExecutor
     {
         try
         {
-            if (!_stateHub.Is(SuspectState.Escorting))
+            if (!IsState(SuspectState.Escorting))
                 return;
 
             var suspect = _controller.GetCurrentSuspect();

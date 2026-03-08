@@ -30,6 +30,16 @@ namespace EF.PoliceMod.Suspects
                     return false;
             }
         }
+
+        public bool AnyEnabled()
+        {
+            return UsePerHandleForEscorting
+                || UsePerHandleForEnteringVehicle
+                || UsePerHandleForInVehicle
+                || UsePerHandleForExitingVehicle
+                || UsePerHandleForRestrained
+                || UsePerHandleForResisting;
+        }
     }
 }
 

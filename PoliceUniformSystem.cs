@@ -188,7 +188,7 @@ namespace EF.PoliceMod.Systems
 
             if (_menuIndex < 0) _menuIndex = 0;
             if (_menuIndex >= items.Count) _menuIndex = items.Count - 1;
-            string text = "~b~[更换警服]~s~\n~c~8/2选择  5确认  Back取消~s~\n";;
+            string text = $"~b~[更换警服]~s~\n~c~{KeyBindings.MenuUp}/{KeyBindings.MenuDown}选择  {KeyBindings.MenuConfirm}确认  {KeyBindings.MenuCancel}取消~s~\n";
             for (int i = 0; i < items.Count; i++)
             {
                 text += (i == _menuIndex ? "~y~> " : "~w~  ") + items[i] + "~s~\n";
@@ -205,10 +205,10 @@ namespace EF.PoliceMod.Systems
             {
                 int maxIndex = 3;
 
-                bool up = Game.IsKeyPressed(System.Windows.Forms.Keys.NumPad8);
-                bool down = Game.IsKeyPressed(System.Windows.Forms.Keys.NumPad2);
-                bool confirm = Game.IsKeyPressed(System.Windows.Forms.Keys.NumPad5);
-                bool cancel = Game.IsKeyPressed(System.Windows.Forms.Keys.Back);
+                bool up = Game.IsKeyPressed(KeyBindings.MenuUp);
+                bool down = Game.IsKeyPressed(KeyBindings.MenuDown);
+                bool confirm = Game.IsKeyPressed(KeyBindings.MenuConfirm);
+                bool cancel = Game.IsKeyPressed(KeyBindings.MenuCancel);
 
                 if (up)
                 {

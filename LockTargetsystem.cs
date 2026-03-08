@@ -132,6 +132,8 @@ namespace EF.PoliceMod.Gameplay
                 _currentState = TargetState.Arrested;
                 _everLocked = true;
                 _lockPressureTriggered = false;
+                EnsureRestrainedStateHub(suspect);
+                try { EventBus.Publish(new TargetLockedEvent(suspect.Handle)); } catch { }
 
                 // 注意：不要在这里 TakeControl()，否则会把 PullOverSystem 刚设置的 IsCompliant=true 重置掉，
                 // 导致按 G 不会触发押送/跟随。
@@ -160,12 +162,35 @@ namespace EF.PoliceMod.Gameplay
                 _currentState = TargetState.Arrested;
                 _everLocked = true;
                 _lockPressureTriggered = false;
+                EnsureRestrainedStateHub(suspect);
+                try { EventBus.Publish(new TargetLockedEvent(suspect.Handle)); } catch { }
 
                 ModLog.Info($"[LockTargetSystem] AutoLockCompliant handle={_currentTarget.Handle}");
             }
             catch (Exception ex)
             {
                 ModLog.Error("[LockTargetSystem] AutoLockCompliant failed: " + ex);
+            }
+        }
+
+        private void EnsureRestrainedStateHub(Ped suspect)
+        {
+            try
+            {
+                if (suspect == null || !suspect.Exists()) return;
+                int handle = suspect.Handle;
+                var core = EFCore.Instance;
+                var hub = core?.StateHubRouter?.GetWriterHubFor(handle, SuspectState.Restrained)
+                    ?? core?.GetSuspectStateHub();
+                if (hub != null && hub.Is(SuspectState.None))
+                {
+                    hub.ChangeState(SuspectState.Restrained);
+                    ModLog.Info($"[LockTargetSystem] StateHub set Restrained (handle={handle})");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLog.Error("[LockTargetSystem] EnsureRestrainedStateHub failed: " + ex);
             }
         }
 
@@ -230,6 +255,7 @@ namespace EF.PoliceMod.Gameplay
                         int slotIndex = GetCaseSlotIndex(target.Handle);
                         if (slotIndex >= 0) Notification.Show($"~g~已锁定嫌疑人({slotIndex + 1})");
                         else Notification.Show(_allowLockAnyPed ? "~g~已锁定目标" : "~g~已锁定嫌疑人");
+                        try { EventBus.Publish(new TargetLockedEvent(_currentTarget.Handle)); } catch { }
 
                         ModLog.Info($"[LockTargetSystem] Switched lock target handle={_currentTarget.Handle} slot={slotIndex}");
                         return;
@@ -277,6 +303,7 @@ namespace EF.PoliceMod.Gameplay
                 int slotIndex = GetCaseSlotIndex(_currentTarget.Handle);
                 if (!_allowLockAnyPed && slotIndex >= 0) Notification.Show($"~g~已锁定嫌疑人({slotIndex + 1})");
                 else Notification.Show(_allowLockAnyPed ? "~g~已锁定目标" : "~g~已锁定嫌疑人");
+                try { EventBus.Publish(new TargetLockedEvent(_currentTarget.Handle)); } catch { }
                 ModLog.Info($"[LockTargetSystem] Locked target handle={_currentTarget.Handle} allowAny={_allowLockAnyPed} slot={slotIndex}");
             }
             catch (Exception ex)
@@ -372,16 +399,28 @@ namespace EF.PoliceMod.Gameplay
             toTarget.Z = 0f;
             Vector3 forward = player.ForwardVector;
             forward.Z = 0f;
-            float facingDot = Vector3.Dot(Vector3.Normalize(toTarget), Vector3.Normalize(forward));
-            if (facingDot < 0.5f)
+            float toLenSq = toTarget.LengthSquared();
+            float fwdLenSq = forward.LengthSquared();
+            if (toLenSq < 0.0001f || fwdLenSq < 0.0001f)
             {
+                ModLog.Warn("[LockTargetSystem] Arrest blocked: invalid facing vectors");
+                Notification.Show("~y~请正对嫌疑人后再尝试");
+                return;
+            }
+
+            float facingDot = Vector3.Dot(Vector3.Normalize(toTarget), Vector3.Normalize(forward));
+            if (facingDot < 0.35f)
+            {
+                ModLog.Info($"[LockTargetSystem] Arrest blocked: facingDot={facingDot:F2} target={_currentTarget.Handle}");
                 Notification.Show("~y~你没有正面对嫌疑人");
                 return;
             }
 
             float distance = player.Position.DistanceTo(_currentTarget.Position);
-            if (distance > ModConfig.ArrestDistance)
+            float maxDistance = ModConfig.ArrestDistance + 0.35f;
+            if (distance > maxDistance)
             {
+                ModLog.Info($"[LockTargetSystem] Arrest blocked: distance={distance:F2} max={maxDistance:F2} target={_currentTarget.Handle}");
                 Notification.Show("~y~距离过远，无法拘捕");
                 return;
             }
@@ -410,7 +449,7 @@ namespace EF.PoliceMod.Gameplay
                     // 若选择“上拷牵走”，触发一次上拷演出（短暂禁控+走到背后+动画）
                     try
                     {
-                        if (EF.PoliceMod.Core.ArrestStyleState.SelectedStyle == EF.PoliceMod.Core.ArrestActionStyle.CuffAndLead)
+                        if (_suspectController != null && _suspectController.CurrentArrestStyle == EF.PoliceMod.Core.ArrestActionStyle.CuffAndLead)
                         {
                             EventBus.Publish(new EF.PoliceMod.Core.CuffingSequenceRequestedEvent(_currentTarget.Handle));
                         }

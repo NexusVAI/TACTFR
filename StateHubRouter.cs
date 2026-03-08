@@ -19,6 +19,11 @@ namespace EF.PoliceMod.Suspects
         {
             try
             {
+                if (_writerGate == null || !_writerGate.AnyEnabled())
+                {
+                    return _legacyHub;
+                }
+
                 if (_ctxRegistry != null
                     && _ctxRegistry.TryGet(suspectHandle, out var ctx)
                     && ctx != null

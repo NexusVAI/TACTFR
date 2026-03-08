@@ -258,14 +258,14 @@ namespace EF.PoliceMod.Systems
 
         private void DrawHint()
         {
-            string hint = "[Num8]上  [Num2]下  [Num5]确认  [Num9]刷新  [Num0]退出";
+            string hint = $"[{KeyBindings.MenuUp}]上  [{KeyBindings.MenuDown}]下  [{KeyBindings.MenuConfirm}]确认  [{KeyBindings.MenuRefresh}]刷新  [{KeyBindings.MenuCancel}]退出";
             if (_page == TerminalPage.RootModeSelect || _page == TerminalPage.CaseTeamSelect)
             {
-                hint = "[Num8]上  [Num2]下  [Num5]确认  [Num0]退出";
+                hint = $"[{KeyBindings.MenuUp}]上  [{KeyBindings.MenuDown}]下  [{KeyBindings.MenuConfirm}]确认  [{KeyBindings.MenuCancel}]退出";
             }
             else if (_page == TerminalPage.CaseList)
             {
-                hint = "[Num8]上  [Num2]下  [Num5]确认  [Num9]刷新列表  [Num0]返回";
+                hint = $"[{KeyBindings.MenuUp}]上  [{KeyBindings.MenuDown}]下  [{KeyBindings.MenuConfirm}]确认  [{KeyBindings.MenuRefresh}]刷新列表  [{KeyBindings.MenuCancel}]返回";
             }
 
             DrawText2D(hint, 0.5f, 0.92f, 0.30f, false, alignCenter: true);
@@ -275,7 +275,7 @@ namespace EF.PoliceMod.Systems
         {
             int now = Game.GameTime;
 
-            if (IsRawKeyDown(System.Windows.Forms.Keys.NumPad8))
+            if (IsRawKeyDown(KeyBindings.MenuUp))
             {
                 if (!_num8Held && now - _lastUiInputTime >= _uiInputDebounceMs)
                 {
@@ -286,7 +286,7 @@ namespace EF.PoliceMod.Systems
             }
             else _num8Held = false;
 
-            if (IsRawKeyDown(System.Windows.Forms.Keys.NumPad2))
+            if (IsRawKeyDown(KeyBindings.MenuDown))
             {
                 if (!_num2Held && now - _lastUiInputTime >= _uiInputDebounceMs)
                 {
@@ -297,7 +297,7 @@ namespace EF.PoliceMod.Systems
             }
             else _num2Held = false;
 
-            if (IsRawKeyDown(System.Windows.Forms.Keys.NumPad5))
+            if (IsRawKeyDown(KeyBindings.MenuConfirm))
             {
                 if (!_num5Held && now - _lastUiInputTime >= _uiInputDebounceMs)
                 {
@@ -308,7 +308,7 @@ namespace EF.PoliceMod.Systems
             }
             else _num5Held = false;
 
-            if (IsRawKeyDown(System.Windows.Forms.Keys.NumPad0))
+            if (IsRawKeyDown(KeyBindings.MenuCancel))
             {
                 if (!_num0Held && now - _lastUiInputTime >= _uiInputDebounceMs)
                 {
@@ -319,7 +319,7 @@ namespace EF.PoliceMod.Systems
             }
             else _num0Held = false;
 
-            if (IsRawKeyDown(System.Windows.Forms.Keys.NumPad9))
+            if (IsRawKeyDown(KeyBindings.MenuRefresh))
             {
                 if (!_num9Held && now - _lastUiInputTime >= _uiInputDebounceMs)
                 {

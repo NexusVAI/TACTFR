@@ -160,7 +160,9 @@ namespace EF.PoliceMod.Input
                 if (enoughTimePassed)
                 {
                     _lastAimedPublishedAtMs = now;
-                    ModLog.Info("[Input] Player is aiming (target-query disabled)");
+#if DEBUG
+                    ModLog.Info("[Input] Player is aiming");
+#endif
                 }
             }
             else

@@ -62,27 +62,35 @@ namespace EF.PoliceMod.Systems
 
         private void DrawMenu()
         {
-            // 兼容版 UI：不依赖 Native Hash，避免与本地自定义 Hash 枚举冲突导致编译失败。
             string line1 = (_selected == 0 ? "> " : "  ") + _items[0];
             string line2 = (_selected == 1 ? "> " : "  ") + _items[1];
-            Screen.ShowSubtitle("~b~拘捕动作~s~\n" + line1 + "\n" + line2 + "\n~c~小键盘8/2选择 5确认  Back取消", 1);
+            string upKey = KeyBindings.MenuUp.ToString();
+            string downKey = KeyBindings.MenuDown.ToString();
+            string confirmKey = KeyBindings.MenuConfirm.ToString();
+            string cancelKey = KeyBindings.MenuCancel.ToString();
+            Screen.ShowSubtitle(
+                $"~b~拘捕动作~s~\n{line1}\n{line2}\n~c~{upKey}/{downKey}选择 {confirmKey}确认 {cancelKey}取消",
+                1
+            );
         }
 
         private void ExecuteSelected()
         {
+            ArrestActionStyle selectedStyle;
             if (_selected == 0)
-                ArrestStyleState.SelectedStyle = ArrestActionStyle.CuffAndLead;
+                selectedStyle = ArrestActionStyle.CuffAndLead;
             else
-                ArrestStyleState.SelectedStyle = ArrestActionStyle.HandsOnHeadFollow;
+                selectedStyle = ArrestActionStyle.HandsOnHeadFollow;
 
             try
             {
                 var core = EFCore.Instance;
                 var lts = core != null ? core.LockTargetSystem : null;
+                try { core?.GetSuspectController()?.SetPendingArrestStyle(selectedStyle); } catch { }
                 var target = lts != null ? lts.CurrentTarget : null;
                 if (target != null && target.Exists())
                 {
-                    EventBus.Publish(new EF.PoliceMod.Core.SuspectArrestStyleSelectedEvent(target.Handle, ArrestStyleState.SelectedStyle));
+                    EventBus.Publish(new EF.PoliceMod.Core.SuspectArrestStyleSelectedEvent(target.Handle, selectedStyle));
                 }
             }
             catch { }
@@ -97,7 +105,7 @@ namespace EF.PoliceMod.Systems
             UIState.BeatArrestMenu(Game.GameTime);
             DrawMenu();
 
-            bool close = Game.IsKeyPressed(Keys.Back);
+            bool close = Game.IsKeyPressed(KeyBindings.MenuCancel);
             if (close)
             {
                 if (!_closeHeld)
@@ -109,9 +117,9 @@ namespace EF.PoliceMod.Systems
             }
             _closeHeld = false;
 
-            bool up = Game.IsKeyPressed(Keys.NumPad8);
-            bool down = Game.IsKeyPressed(Keys.NumPad2);
-            bool confirm = Game.IsKeyPressed(Keys.NumPad5);
+            bool up = Game.IsKeyPressed(KeyBindings.MenuUp);
+            bool down = Game.IsKeyPressed(KeyBindings.MenuDown);
+            bool confirm = Game.IsKeyPressed(KeyBindings.MenuConfirm);
 
             if (up)
             {

@@ -9,8 +9,8 @@ namespace EF.PoliceMod.Systems
 {
     /// <summary>
     /// F7 调度菜单（右上角原生绘制，类似修改器）：
-    /// - 小键盘 8 上、2 下、5 确认
-    /// - F7 或 Backspace 关闭
+    /// - 菜单导航键由 KeyBindings 配置
+    /// - F7 或菜单取消键关闭
     /// </summary>
     public class DispatchMenuController
     {
@@ -146,7 +146,11 @@ namespace EF.PoliceMod.Systems
                 Function.Call(Hash.SET_TEXT_CENTRE, true);
                 Function.Call(Hash.SET_TEXT_COLOUR, 200, 200, 200, 255);
                 Function.Call(Hash.BEGIN_TEXT_COMMAND_DISPLAY_TEXT, "STRING");
-                Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME, "小键盘8/2选择 5确认  F7关闭");
+                string upKey = KeyBindings.MenuUp.ToString();
+                string downKey = KeyBindings.MenuDown.ToString();
+                string confirmKey = KeyBindings.MenuConfirm.ToString();
+                string cancelKey = KeyBindings.MenuCancel.ToString();
+                Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME, $"{upKey}/{downKey}选择 {confirmKey}确认  F7/{cancelKey}关闭");
                 Function.Call(Hash.END_TEXT_COMMAND_DISPLAY_TEXT, panelX, panelY + panelH / 2 - 0.025f);
             }
             catch { }
@@ -185,7 +189,7 @@ namespace EF.PoliceMod.Systems
             // 关闭（加入延迟，避免刚打开就被同一次按键关掉）
             int now = Game.GameTime;
             // 用原始按键状态：在某些 UI/控制接管情况下，Game.IsKeyPressed 可能检测不到
-            bool closeDown = IsRawKeyDown(Keys.F7) || IsRawKeyDown(Keys.Back);
+            bool closeDown = IsRawKeyDown(KeyBindings.DispatchMenu) || IsRawKeyDown(KeyBindings.MenuCancel);
             bool canClose = (now - _openedAtMs) > 250;
             if (closeDown)
             {
@@ -201,10 +205,9 @@ namespace EF.PoliceMod.Systems
                 _closeHeld = false;
             }
 
-            // 上/下/确认：小键盘 8/2/5
-            bool up = Game.IsKeyPressed(Keys.NumPad8);
-            bool down = Game.IsKeyPressed(Keys.NumPad2);
-            bool confirm = Game.IsKeyPressed(Keys.NumPad5);
+            bool up = Game.IsKeyPressed(KeyBindings.MenuUp);
+            bool down = Game.IsKeyPressed(KeyBindings.MenuDown);
+            bool confirm = Game.IsKeyPressed(KeyBindings.MenuConfirm);
 
             if (up)
             {

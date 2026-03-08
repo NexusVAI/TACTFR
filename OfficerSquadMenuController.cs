@@ -185,7 +185,13 @@ namespace EF.PoliceMod.Systems
                 Function.Call(Hash.SET_TEXT_CENTRE, true);
                 Function.Call(Hash.SET_TEXT_COLOUR, 200, 200, 200, 255);
                 Function.Call(Hash.BEGIN_TEXT_COMMAND_DISPLAY_TEXT, "STRING");
-                Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME, "4/6切换对象 8/2选择 5确认 Back取消");
+                string leftKey = KeyBindings.MenuLeft.ToString();
+                string rightKey = KeyBindings.MenuRight.ToString();
+                string upKey = KeyBindings.MenuUp.ToString();
+                string downKey = KeyBindings.MenuDown.ToString();
+                string confirmKey = KeyBindings.MenuConfirm.ToString();
+                string cancelKey = KeyBindings.MenuCancel.ToString();
+                Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME, $"{leftKey}/{rightKey}切换对象 {upKey}/{downKey}选择 {confirmKey}确认 {cancelKey}取消");
                 Function.Call(Hash.END_TEXT_COMMAND_DISPLAY_TEXT, x, y + panelH / 2 - 0.025f);
             }
             catch { }
@@ -193,7 +199,7 @@ namespace EF.PoliceMod.Systems
 
         private void HandleInput()
         {
-            bool cancel = Game.IsKeyPressed(Keys.Back);
+            bool cancel = Game.IsKeyPressed(KeyBindings.MenuCancel);
             if (cancel)
             {
                 if (!_cancelHeld)
@@ -205,11 +211,11 @@ namespace EF.PoliceMod.Systems
             }
             _cancelHeld = false;
 
-            bool left = Game.IsKeyPressed(Keys.NumPad4);
-            bool right = Game.IsKeyPressed(Keys.NumPad6);
-            bool up = Game.IsKeyPressed(Keys.NumPad8);
-            bool down = Game.IsKeyPressed(Keys.NumPad2);
-            bool confirm = Game.IsKeyPressed(Keys.NumPad5);
+            bool left = Game.IsKeyPressed(KeyBindings.MenuLeft);
+            bool right = Game.IsKeyPressed(KeyBindings.MenuRight);
+            bool up = Game.IsKeyPressed(KeyBindings.MenuUp);
+            bool down = Game.IsKeyPressed(KeyBindings.MenuDown);
+            bool confirm = Game.IsKeyPressed(KeyBindings.MenuConfirm);
 
             if (left)
             {

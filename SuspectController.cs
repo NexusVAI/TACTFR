@@ -43,6 +43,8 @@ namespace EF.PoliceMod.Gameplay
         private readonly HashSet<int> _busySuspects = new HashSet<int>(); // 存储正在被执行关键任务的 suspect handle
         private readonly HashSet<int> _compliantSuspects = new HashSet<int>();
         private readonly HashSet<int> _resistingSuspects = new HashSet<int>();
+        private ArrestActionStyle _pendingArrestStyle = ArrestActionStyle.CuffAndLead;
+        private bool _menuArrestContext = false;
 
         public struct SuspectCompliantEvent
 {
@@ -329,6 +331,8 @@ namespace EF.PoliceMod.Gameplay
             _currentSuspect = null;
 
             CurrentArrestStyle = EF.PoliceMod.Core.ArrestActionStyle.CuffAndLead;
+            _pendingArrestStyle = ArrestActionStyle.CuffAndLead;
+            _menuArrestContext = false;
             IsCompliant = false;
             IsResisting = false;
             _wasShotByPlayer = false;
@@ -337,11 +341,21 @@ namespace EF.PoliceMod.Gameplay
             try { _resistingSuspects.Clear(); } catch { }
         }
 
+        public void SetPendingArrestStyle(ArrestActionStyle style)
+        {
+            _pendingArrestStyle = style;
+        }
+
 
         public void Arrest(Ped ped)
         {
             if (ped == null || !ped.Exists())
                 return;
+            if (!_menuArrestContext)
+            {
+                ModLog.Warn($"[SuspectController] Arrest blocked outside menu flow: ped={ped.Handle}");
+                return;
+            }
 
             // 去重：避免重复发布 SuspectArrestedEvent（会导致状态机/行为重复执行）
             try
@@ -355,7 +369,7 @@ namespace EF.PoliceMod.Gameplay
             _currentSuspect = ped;
 
             // 记录本次拘捕选择的动作风格（后续跟随/上车/下车都以此为准）
-            CurrentArrestStyle = EF.PoliceMod.Core.ArrestStyleState.SelectedStyle;
+            CurrentArrestStyle = _pendingArrestStyle;
 
             // 拘捕成功后：标记为“可押送/已控制”
             IsResisting = false;
@@ -452,12 +466,15 @@ namespace EF.PoliceMod.Gameplay
                 }
 
                 // 不触发随机反抗 → 执行拘捕
+                _menuArrestContext = true;
                 Arrest(_currentSuspect);
+                _menuArrestContext = false;
                 return true;
             }
             catch (Exception ex)
             {
                 ModLog.Error("[SuspectController] TryAttemptArrest exception: " + ex);
+                _menuArrestContext = false;
                 try { _busySuspects.Remove(handle); } catch { }
                 return false;
             }

@@ -45,7 +45,8 @@ namespace EF.PoliceMod.Core
             {
                 case SuspectState.None:
                     return to == SuspectState.Restrained
-                        || to == SuspectState.Resisting;
+                        || to == SuspectState.Resisting
+                        || to == SuspectState.Escorting;
 
                 case SuspectState.Restrained:
                     return to == SuspectState.Escorting
@@ -76,7 +77,7 @@ namespace EF.PoliceMod.Core
 
         public void Reset()
         {
-            _stateMachine.ChangeState(SuspectState.None);
+            _stateMachine.ForceState(SuspectState.None);
         }
 
         public void ResetTo(SuspectState state)

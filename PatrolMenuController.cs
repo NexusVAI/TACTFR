@@ -121,7 +121,11 @@ namespace EF.PoliceMod.Systems
                 Function.Call(Hash.SET_TEXT_CENTRE, true);
                 Function.Call(Hash.SET_TEXT_COLOUR, 200, 200, 200, 255);
                 Function.Call(Hash.BEGIN_TEXT_COMMAND_DISPLAY_TEXT, "STRING");
-                Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME, "小键盘8/2选择 5确认  H/Num0关闭");
+                string upKey = KeyBindings.MenuUp.ToString();
+                string downKey = KeyBindings.MenuDown.ToString();
+                string confirmKey = KeyBindings.MenuConfirm.ToString();
+                string cancelKey = KeyBindings.MenuCancel.ToString();
+                Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME, $"{upKey}/{downKey}选择 {confirmKey}确认  H/{cancelKey}关闭");
                 Function.Call(Hash.END_TEXT_COMMAND_DISPLAY_TEXT, panelX, panelY + panelH / 2 - 0.025f);
             }
             catch { }
@@ -132,9 +136,8 @@ namespace EF.PoliceMod.Systems
             int now = Game.GameTime;
             bool canClose = (now - _openedAtMs) > 250;
 
-            bool cancel = IsRawKeyDown(Keys.NumPad0)
-                || IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.ArrestMenu)
-                || IsRawKeyDown(Keys.Back);
+            bool cancel = IsRawKeyDown(KeyBindings.MenuCancel)
+                || IsRawKeyDown(EF.PoliceMod.Core.KeyBindings.ArrestMenu);
             if (cancel && canClose)
             {
                 if (!_cancelHeld)
@@ -146,9 +149,9 @@ namespace EF.PoliceMod.Systems
             }
             _cancelHeld = false;
 
-            bool up = IsRawKeyDown(Keys.NumPad8);
-            bool down = IsRawKeyDown(Keys.NumPad2);
-            bool confirm = IsRawKeyDown(Keys.NumPad5);
+            bool up = IsRawKeyDown(KeyBindings.MenuUp);
+            bool down = IsRawKeyDown(KeyBindings.MenuDown);
+            bool confirm = IsRawKeyDown(KeyBindings.MenuConfirm);
 
             if (up)
             {
